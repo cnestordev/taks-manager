@@ -1,6 +1,23 @@
-.column-container {
+.container {
+  display: flex;
+  gap: 25px;
+}
+
+.columns-container {
   display: flex;
   flex-direction: row;
-  border: 1px solid black;
   gap: 25px;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 4px solid gold;
+}
+
+.input-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
 }

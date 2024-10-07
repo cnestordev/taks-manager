@@ -1,7 +1,7 @@
 import "./PriorityColumn.css";
 import TaskCard from "./TaskCard";
 
-function PriorityColumn({ priority, tasks }) {
+function PriorityColumn({ priority, tasks, deleteTask }) {
   return (
     <>
       <div className="column">
@@ -9,9 +9,9 @@ function PriorityColumn({ priority, tasks }) {
           <h1>{priority} Priority</h1>
         </div>
         <div>
-          {tasks.map((task, index) => (
-            <TaskCard key={index} task={task} />
-          ))}
+          {
+            tasks && tasks.length === 0 ? <p>No {priority} tasks</p> : tasks.map((task) => <TaskCard deleteTask={deleteTask} key={task.title} task={task} />)
+          }
         </div>
       </div>
     </>

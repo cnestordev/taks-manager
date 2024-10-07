@@ -23,3 +23,9 @@ button {
     font-weight: bold;
     cursor: pointer;
 }
+
+.trash-icon {
+    color: rgb(221, 101, 101);
+    display: flex;
+    justify-content: center;
+}

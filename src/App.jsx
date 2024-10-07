@@ -1,32 +1,76 @@
 // App.jsx
-import { useState } from 'react';
-import './App.css';
-import PriorityColumn from './components/PriorityColumn';
+import { useEffect, useState } from "react";
+import "./App.css";
+import PriorityColumn from "./components/PriorityColumn";
 
 function App() {
-  const [tasks, setTasks] = useState([
-    { title: "Task 1", description: "Description 1", priority: "High" },
-    { title: "Task 2", description: "Description 2", priority: "Medium" },
-    { title: "Task 3", description: "Description 3", priority: "Low" },
-  ]);
+  const items = JSON.parse(localStorage.getItem('tasks')) || [];
+  const [tasks, setTasks] = useState(items);
 
-  function addTask(newTask) {
-    setTasks([...tasks, newTask]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("High");
+
+  function addTask(e) {
+    e.preventDefault();
+    console.log(title, description, priority);
+    setTasks([...tasks, { title, description, priority, id: generateId() }]);
   }
 
-  const highPriorityTasks = tasks.filter(task => task.priority === "High");
-  const mediumPriorityTasks = tasks.filter(task => task.priority === "Medium");
-  const lowPriorityTasks = tasks.filter(task => task.priority === "Low");
+  function generateId() {
+    return Math.random().toString(36).substring(2, 7);
+  }  
+
+  const deleteTask = task => {
+    const taskId = task.id;
+    const newTasks = [...tasks]
+    const filteredTasks = newTasks.filter(task => task.id !== taskId)
+    setTasks(filteredTasks)
+  }
+
+  const highPriorityTasks = tasks.filter((task) => task.priority === "High");
+  const mediumPriorityTasks = tasks.filter(
+    (task) => task.priority === "Medium"
+  );
+  const lowPriorityTasks = tasks.filter((task) => task.priority === "Low");
+
+  useEffect(() => {
+    console.log("%c change detected", "color: red")
+    localStorage.setItem('tasks', JSON.stringify(tasks))
+  }, [tasks]);
 
   return (
-    <>
-      <div className="column-container">
-        <button onClick={() => addTask({ title: "Task 4", description: "Description 4", priority: "High" })}>+</button>
-        <PriorityColumn priority="High" tasks={highPriorityTasks} />
-        <PriorityColumn priority="Medium" tasks={mediumPriorityTasks} />
-        <PriorityColumn priority="Low" tasks={lowPriorityTasks} />
+    <div className="container">
+      <div className="columns-container">
+        <PriorityColumn deleteTask={deleteTask} priority="High" tasks={highPriorityTasks} />
+        <PriorityColumn deleteTask={deleteTask} priority="Medium" tasks={mediumPriorityTasks} />
+        <PriorityColumn deleteTask={deleteTask} priority="Low" tasks={lowPriorityTasks} />
       </div>
-    </>
+      <div className="form-container">
+        <h1>Add Task</h1>
+        <form onSubmit={(e) => addTask(e)}>
+          <div className="input-field">
+            <label htmlFor="title">Title:</label>
+            <input onChange={(e) => setTitle(e.target.value)} type="text" id="title" />
+          </div>
+          <div className="input-field">
+            <label htmlFor="description">Description:</label>
+            <textarea onChange={(e) => setDescription(e.target.value)} id="description" />
+          </div>
+          <div className="input-field">
+            <label htmlFor="priority">Priority:</label>
+            <select onChange={(e) => setPriority(e.target.value)} id="priority">
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div>
+            <button type="submit">Add Task</button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 

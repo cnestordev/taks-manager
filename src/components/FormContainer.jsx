@@ -1,6 +1,6 @@
 import './FormContainer.css'
 
-const FormContainer = ({title, description, priority, setTitle, setDescription, setPriority, addTask}) => {
+const FormContainer = ({title, description, priority, error, setTitle, setDescription, setPriority, addTask}) => {
     return (
         <div className="form-container">
         <h1 className='form-title'>Add Task</h1>
@@ -23,6 +23,7 @@ const FormContainer = ({title, description, priority, setTitle, setDescription, 
           </div>
           <div className='submit-container'>
             <button className='btn-submit' type="submit">Add Task</button>
+            <p className='error-text'>{error}</p>
           </div>
         </form>
       </div>

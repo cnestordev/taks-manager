@@ -1,35 +1,33 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// App.jsx
+import { useState } from 'react';
+import './App.css';
+import PriorityColumn from './components/PriorityColumn';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [tasks, setTasks] = useState([
+    { title: "Task 1", description: "Description 1", priority: "High" },
+    { title: "Task 2", description: "Description 2", priority: "Medium" },
+    { title: "Task 3", description: "Description 3", priority: "Low" },
+  ]);
+
+  function addTask(newTask) {
+    setTasks([...tasks, newTask]);
+  }
+
+  const highPriorityTasks = tasks.filter(task => task.priority === "High");
+  const mediumPriorityTasks = tasks.filter(task => task.priority === "Medium");
+  const lowPriorityTasks = tasks.filter(task => task.priority === "Low");
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className="column-container">
+        <button onClick={() => addTask({ title: "Task 4", description: "Description 4", priority: "High" })}>+</button>
+        <PriorityColumn priority="High" tasks={highPriorityTasks} />
+        <PriorityColumn priority="Medium" tasks={mediumPriorityTasks} />
+        <PriorityColumn priority="Low" tasks={lowPriorityTasks} />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

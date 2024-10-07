@@ -1,10 +1,9 @@
-// App.jsx
 import { useEffect, useState } from "react";
 import "./App.css";
 import PriorityColumn from "./components/PriorityColumn";
 import FormContainer from "./components/FormContainer";
 
-function App() {
+const App = () => {
   const items = JSON.parse(localStorage.getItem("tasks")) || [];
   const [tasks, setTasks] = useState(items);
 
@@ -13,7 +12,7 @@ function App() {
   const [priority, setPriority] = useState("High");
   const [error, setError] = useState("");
 
-  function addTask(e) {
+  const addTask = (e) => {
     e.preventDefault();
 
     if (title === "" || description === "") {
@@ -22,25 +21,18 @@ function App() {
     }
 
     setError("");
-
     setTasks([...tasks, { title, description, priority, id: generateId() }]);
-  }
+  };
 
-  function generateId() {
-    return Math.random().toString(36).substring(2, 7);
-  }
+  const generateId = () => Math.random().toString(36).substring(2, 7);
 
   const deleteTask = (task) => {
-    const taskId = task.id;
-    const newTasks = [...tasks];
-    const filteredTasks = newTasks.filter((task) => task.id !== taskId);
-    setTasks(filteredTasks);
+    const newTasks = tasks.filter((t) => t.id !== task.id);
+    setTasks(newTasks);
   };
 
   const highPriorityTasks = tasks.filter((task) => task.priority === "High");
-  const mediumPriorityTasks = tasks.filter(
-    (task) => task.priority === "Medium"
-  );
+  const mediumPriorityTasks = tasks.filter((task) => task.priority === "Medium");
   const lowPriorityTasks = tasks.filter((task) => task.priority === "Low");
 
   useEffect(() => {
@@ -85,6 +77,6 @@ function App() {
       />
     </div>
   );
-}
+};
 
 export default App;

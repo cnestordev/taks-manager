@@ -42,9 +42,9 @@ function App() {
   return (
     <div className="container">
       <div className="columns-container">
-        <PriorityColumn deleteTask={deleteTask} priority="High" tasks={highPriorityTasks} />
-        <PriorityColumn deleteTask={deleteTask} priority="Medium" tasks={mediumPriorityTasks} />
-        <PriorityColumn deleteTask={deleteTask} priority="Low" tasks={lowPriorityTasks} />
+        <PriorityColumn color="#ffa5a5" deleteTask={deleteTask} priority="High" tasks={highPriorityTasks} />
+        <PriorityColumn color="#ffd3a5" deleteTask={deleteTask} priority="Medium" tasks={mediumPriorityTasks} />
+        <PriorityColumn color="#fff8a5" deleteTask={deleteTask} priority="Low" tasks={lowPriorityTasks} />
       </div>
       <div className="form-container">
         <h1>Add Task</h1>

@@ -3,6 +3,7 @@
 /* Box sizing reset */
 *, *::before, *::after {
   box-sizing: border-box;
+  font-family: "League Spartan", sans-serif;
 }
 
 /* Remove default margin and padding */

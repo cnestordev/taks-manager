@@ -1,12 +1,12 @@
 import "./PriorityColumn.css";
 import TaskCard from "./TaskCard";
 
-function PriorityColumn({ priority, tasks, deleteTask }) {
+function PriorityColumn({ priority, tasks, deleteTask, color }) {
   return (
     <>
       <div className="column">
         <div className="header">
-          <h1>{priority} Priority</h1>
+          <h1 style={{backgroundColor: color}} className="title">{priority} Priority</h1>
         </div>
         <div>
           {

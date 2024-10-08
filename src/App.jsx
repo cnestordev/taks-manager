@@ -32,6 +32,14 @@ const App = () => {
     setTasks(newTasks);
   };
 
+  const toggleExpand = (taskId) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === taskId ? { ...task, isExpanded: !task.isExpanded } : task
+      )
+    );
+  };
+
   const handleDragEnd = (result) => {
     const { destination, source, draggableId } = result;
 
@@ -97,18 +105,21 @@ const App = () => {
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="columns-container">
           <PriorityColumn
+            toggleExpand={toggleExpand}
             deleteTask={deleteTask}
             priority="High"
             tasks={tasks.filter((task) => task.priority === "High")}
             id="High"
           />
           <PriorityColumn
+            toggleExpand={toggleExpand}
             deleteTask={deleteTask}
             priority="Medium"
             tasks={tasks.filter((task) => task.priority === "Medium")}
             id="Medium"
           />
           <PriorityColumn
+            toggleExpand={toggleExpand}
             deleteTask={deleteTask}
             priority="Low"
             tasks={tasks.filter((task) => task.priority === "Low")}

@@ -2,7 +2,7 @@ import "./PriorityColumn.css";
 import TaskCard from "./TaskCard";
 import { Droppable } from "@hello-pangea/dnd";
 
-const PriorityColumn = ({ priority, tasks, deleteTask, color, id }) => (
+const PriorityColumn = ({ priority, tasks, deleteTask, toggleExpand, id }) => (
   <Droppable droppableId={id}>
     {(provided) => (
       <div
@@ -19,6 +19,7 @@ const PriorityColumn = ({ priority, tasks, deleteTask, color, id }) => (
           {tasks &&
             tasks.map((task, index) => (
               <TaskCard
+                toggleExpand={toggleExpand}
                 deleteTask={deleteTask}
                 key={task.id}
                 task={task}

@@ -12,6 +12,17 @@ import {
   AlertDialogOverlay,
   useDisclosure,
   Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  FormControl,
+  FormLabel,
+  Input,
+  Select,
 } from "@chakra-ui/react";
 
 const App = () => {
@@ -23,8 +34,17 @@ const App = () => {
   const [priority, setPriority] = useState("High");
   const [error, setError] = useState("");
   const [selectedTask, setSelectedTask] = useState(null);
+
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isEditModalOpen,
+    onOpen: onEditModalOpen,
+    onClose: onEditModalClose,
+  } = useDisclosure();
+
   const cancelRef = useRef();
+  const initialRef = useRef(null);
+  const finalRef = useRef(null);
 
   const addTask = (e) => {
     e.preventDefault();
@@ -52,6 +72,27 @@ const App = () => {
       setSelectedTask(null);
     }
     onClose();
+  };
+
+  const editTask = (task) => {
+    if (task) {
+      setSelectedTask(task);
+      setTitle(task.title);
+      setDescription(task.description);
+      setPriority(task.priority);
+      onEditModalOpen();
+    }
+  };
+
+  const saveTaskChanges = () => {
+    const updatedTasks = tasks.map((task) =>
+      task.id === selectedTask.id
+        ? { ...task, title, description, priority }
+        : task
+    );
+    setTasks(updatedTasks);
+    setSelectedTask(null);
+    onEditModalClose();
   };
 
   const toggleExpand = (taskId) => {
@@ -125,7 +166,9 @@ const App = () => {
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Delete Task
-              <p className="modal-task-title">{selectedTask && selectedTask.title}</p>
+              <p className="modal-task-title">
+                {selectedTask && selectedTask.title}
+              </p>
             </AlertDialogHeader>
 
             <AlertDialogBody>
@@ -144,12 +187,68 @@ const App = () => {
         </AlertDialogOverlay>
       </AlertDialog>
 
+      {/* Edit Task Modal */}
+      {selectedTask && (
+        <Modal
+          initialFocusRef={initialRef}
+          finalFocusRef={finalRef}
+          isOpen={isEditModalOpen}
+          onClose={onEditModalClose}
+        >
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Edit Task</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody pb={6}>
+              <FormControl>
+                <FormLabel>Title</FormLabel>
+                <Input
+                  ref={initialRef}
+                  placeholder="Task Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>Description</FormLabel>
+                <Input
+                  placeholder="Task Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>Priority</FormLabel>
+                <Select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                >
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </Select>
+              </FormControl>
+            </ModalBody>
+
+            <ModalFooter>
+              <Button colorScheme="blue" mr={3} onClick={saveTaskChanges}>
+                Save
+              </Button>
+              <Button onClick={onEditModalClose}>Cancel</Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+
       {/* Drag and Drop Context */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="columns-container">
           <PriorityColumn
             toggleExpand={toggleExpand}
             deleteTask={deleteTask}
+            editTask={editTask}
             priority="High"
             tasks={tasks.filter((task) => task.priority === "High")}
             id="High"
@@ -157,6 +256,7 @@ const App = () => {
           <PriorityColumn
             toggleExpand={toggleExpand}
             deleteTask={deleteTask}
+            editTask={editTask}
             priority="Medium"
             tasks={tasks.filter((task) => task.priority === "Medium")}
             id="Medium"
@@ -164,6 +264,7 @@ const App = () => {
           <PriorityColumn
             toggleExpand={toggleExpand}
             deleteTask={deleteTask}
+            editTask={editTask}
             priority="Low"
             tasks={tasks.filter((task) => task.priority === "Low")}
             id="Low"

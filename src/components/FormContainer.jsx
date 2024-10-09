@@ -43,6 +43,7 @@ const FormContainer = ({
         placement="right"
         onClose={onClose}
         finalFocusRef={btnRef}
+        size="md"
       >
         <DrawerOverlay />
         <DrawerContent>

@@ -1,6 +1,3 @@
-import "./TaskCard.css";
-import { FaTrash } from "react-icons/fa";
-import { Draggable } from "@hello-pangea/dnd";
 import {
   Accordion,
   AccordionButton,
@@ -8,10 +5,13 @@ import {
   AccordionItem,
   AccordionPanel,
   Box,
-  IconButton,
+  Flex
 } from "@chakra-ui/react";
+import { Draggable } from "@hello-pangea/dnd";
+import { FaEdit } from "react-icons/fa";
+import "./TaskCard.css";
 
-const TaskCard = ({ task, deleteTask, index, toggleExpand }) => {
+const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
   const toggleDescription = (id) => {
     toggleExpand(id);
   };
@@ -42,24 +42,36 @@ const TaskCard = ({ task, deleteTask, index, toggleExpand }) => {
                   <AccordionIcon />
                 </AccordionButton>
               </h2>
-              <AccordionPanel
-                pb={2}
-              >
+              <AccordionPanel pb={2}>
                 <Box as="p" textAlign="center" fontSize="15px" mb={2}>
                   {task.description}
                 </Box>
-                <IconButton
-                  aria-label="Delete Task"
-                  icon={<FaTrash />}
-                  size="sm"
-                  colorScheme="red"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteTask(task);
-                  }}
-                  float="right"
-                  className="trash-icon"
-                />
+                <Flex gap="10px" justifyContent="center" marginTop="4">
+                  <button
+                    aria-label="Delete Task"
+                    size="sm"
+                    className="task-btns delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteTask(task);
+                    }}
+                  >
+                    Delete
+                  </button>
+
+                  <button
+                    aria-label="Edit Task"
+                    icon={<FaEdit />}
+                    size="sm"
+                    className="task-btns edit-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      editTask(task);
+                    }}
+                  >
+                    Edit
+                  </button>
+                </Flex>
               </AccordionPanel>
             </AccordionItem>
           </Accordion>

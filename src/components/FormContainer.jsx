@@ -18,6 +18,8 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
+import { AddIcon } from "@chakra-ui/icons";
+
 const FormContainer = ({
   title,
   description,
@@ -34,7 +36,7 @@ const FormContainer = ({
   return (
     <div className="form-container">
       <Button ref={btnRef} colorScheme="teal" onClick={onOpen}>
-        Open
+        <AddIcon />
       </Button>
       <Drawer
         isOpen={isOpen}

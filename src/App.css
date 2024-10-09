@@ -13,3 +13,9 @@
   flex-basis: 70%;  
   padding: 5px 10px;
 }
+
+.modal-task-title {
+  text-align: left;
+  font-style: italic;
+  font-weight: 400;
+}

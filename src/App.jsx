@@ -3,6 +3,16 @@ import "./App.css";
 import { DragDropContext } from "@hello-pangea/dnd";
 import PriorityColumn from "./components/PriorityColumn";
 import FormContainer from "./components/FormContainer";
+import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
+  useDisclosure,
+  Button,
+} from "@chakra-ui/react";
 
 const App = () => {
   const items = JSON.parse(localStorage.getItem("tasks")) || [];
@@ -12,6 +22,9 @@ const App = () => {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("High");
   const [error, setError] = useState("");
+  const [selectedTask, setSelectedTask] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const cancelRef = useRef();
 
   const addTask = (e) => {
     e.preventDefault();
@@ -28,8 +41,17 @@ const App = () => {
   const generateId = () => Math.random().toString(36).substring(2, 7);
 
   const deleteTask = (task) => {
-    const newTasks = tasks.filter((t) => t.id !== task.id);
-    setTasks(newTasks);
+    setSelectedTask(task);
+    onOpen();
+  };
+
+  const handleRemoveTask = () => {
+    if (selectedTask) {
+      const newTasks = tasks.filter((t) => t.id !== selectedTask.id);
+      setTasks(newTasks);
+      setSelectedTask(null);
+    }
+    onClose();
   };
 
   const toggleExpand = (taskId) => {
@@ -43,7 +65,6 @@ const App = () => {
   const handleDragEnd = (result) => {
     const { destination, source, draggableId } = result;
 
-    // If card was not moved, do nothing
     if (!destination) return;
 
     if (
@@ -53,13 +74,8 @@ const App = () => {
       return;
     }
 
-    console.log(
-      `Item ${draggableId} was moved from position ${source.index} in ${source.droppableId} to position ${destination.index} in ${destination.droppableId}`
-    );
-
     const updatedTasks = Array.from(tasks);
 
-    // Find the index of the task that was dragged
     const sourceIndex = updatedTasks.findIndex(
       (task) => task.id === draggableId
     );
@@ -68,10 +84,8 @@ const App = () => {
       priority: destination.droppableId,
     };
 
-    // Remove the task from its original position
     updatedTasks.splice(sourceIndex, 1);
 
-    // Calculate the new index based on the "Low" priority group size
     const destinationPriorityTasks = updatedTasks.filter(
       (task) => task.priority === destination.droppableId
     );
@@ -80,7 +94,6 @@ const App = () => {
         ? destination.index
         : destinationPriorityTasks.length;
 
-    // Insert the task at its new position in the destination column
     updatedTasks.splice(
       destinationIndex +
         updatedTasks.findIndex(
@@ -102,6 +115,36 @@ const App = () => {
 
   return (
     <div className="container">
+      {/* Delete Confirmation Modal */}
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Task
+              <p className="modal-task-title">{selectedTask && selectedTask.title}</p>
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you want to delete this task?
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button colorScheme="red" onClick={handleRemoveTask} ml={3}>
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      {/* Drag and Drop Context */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="columns-container">
           <PriorityColumn

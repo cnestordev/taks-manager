@@ -2,6 +2,8 @@
   display: flex;
   gap: 5px;
   height: 100vh;
+  justify-content: space-between;
+  padding: 5px 50px;
 }
 
 .columns-container {

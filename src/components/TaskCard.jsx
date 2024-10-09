@@ -46,7 +46,7 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
                 <Box as="p" textAlign="center" fontSize="15px" mb={2}>
                   {task.description}
                 </Box>
-                <Flex gap="10px" justifyContent="center" marginTop="4">
+                <Flex gap="30px" justifyContent="center" marginTop="4">
                   <button
                     aria-label="Delete Task"
                     size="sm"

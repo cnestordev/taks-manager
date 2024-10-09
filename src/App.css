@@ -19,3 +19,10 @@
   font-style: italic;
   font-weight: 400;
 }
+
+.modal-delete-message {
+  color: #e12020;
+  text-align: left;
+  font-weight: 400;
+  font-size: 16px;
+}

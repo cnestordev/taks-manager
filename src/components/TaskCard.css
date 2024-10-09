@@ -57,19 +57,25 @@ p {
 }
 
 .delete-btn {
-  background-color: #ffc3c3;
-  color: #9b5656;
+  border:1px solid #ff9b9b;
+  color: #ff9b9b;
+  transition: 300ms;
 }
 
 .delete-btn:hover {
   background-color: #ff9a9a;
+  color: #fff;
+  transition: 300ms;
 }
 
 .edit-btn {
-  background-color: #d7d7d7;
+  border: 1px solid #d7d7d7;
   color: #676767;
+  transition: 300ms;
 }
 
 .edit-btn:hover {
   background-color: #bfbfbf;
+  color: #fff;
+  transition: 300ms;
 }

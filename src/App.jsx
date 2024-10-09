@@ -24,6 +24,7 @@ import {
   Input,
   Select,
 } from "@chakra-ui/react";
+import { WarningIcon } from "@chakra-ui/icons";
 
 const App = () => {
   const items = JSON.parse(localStorage.getItem("tasks")) || [];
@@ -147,6 +148,18 @@ const App = () => {
     setTasks(updatedTasks);
   };
 
+  const toggleTaskExpansion = (priority, boolean) => {
+    if (["High", "Medium", "Low"].includes(priority)) {
+      setTasks(
+        tasks.map((task) =>
+          task.priority === priority && task.isExpanded !== boolean
+            ? { ...task, isExpanded: boolean }
+            : task
+        )
+      );
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
     setTitle("");
@@ -161,18 +174,19 @@ const App = () => {
         isOpen={isOpen}
         leastDestructiveRef={cancelRef}
         onClose={onClose}
+        size="xl"
       >
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Delete Task
-              <p className="modal-task-title">
-                {selectedTask && selectedTask.title}
-              </p>
+              <WarningIcon /> Delete Task
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure you want to delete this task?
+              <p className="modal-delete-message">Are you sure you want to delete this task?</p>
+              <p className="modal-task-title">
+                {selectedTask && selectedTask.title}
+              </p>
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -249,6 +263,7 @@ const App = () => {
             toggleExpand={toggleExpand}
             deleteTask={deleteTask}
             editTask={editTask}
+            toggleTaskExpansion={toggleTaskExpansion}
             priority="High"
             tasks={tasks.filter((task) => task.priority === "High")}
             id="High"
@@ -257,6 +272,7 @@ const App = () => {
             toggleExpand={toggleExpand}
             deleteTask={deleteTask}
             editTask={editTask}
+            toggleTaskExpansion={toggleTaskExpansion}
             priority="Medium"
             tasks={tasks.filter((task) => task.priority === "Medium")}
             id="Medium"
@@ -265,6 +281,7 @@ const App = () => {
             toggleExpand={toggleExpand}
             deleteTask={deleteTask}
             editTask={editTask}
+            toggleTaskExpansion={toggleTaskExpansion}
             priority="Low"
             tasks={tasks.filter((task) => task.priority === "Low")}
             id="Low"

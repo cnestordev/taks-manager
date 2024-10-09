@@ -35,7 +35,7 @@ const FormContainer = ({
 
   return (
     <div className="form-container">
-      <Button ref={btnRef} colorScheme="teal" onClick={onOpen}>
+      <Button variant="solid" ref={btnRef} colorScheme="blue" onClick={onOpen}>
         <AddIcon />
       </Button>
       <Drawer

@@ -2,7 +2,7 @@
   background-color: #e9f3ff;
   border-radius: 15px;
   padding: 25px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -57,13 +57,13 @@ p {
 }
 
 .delete-btn {
-  border:1px solid #ff9b9b;
-  color: #ff9b9b;
+  border:1px solid #fa2f43;
+  color: #fa2f43;
   transition: 300ms;
 }
 
 .delete-btn:hover {
-  background-color: #ff9a9a;
+  background-color: #fa2f43;
   color: #fff;
   transition: 300ms;
 }

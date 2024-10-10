@@ -1,7 +1,7 @@
 .column {
     background-color: #fff;
     flex-basis: 33%;
-    padding: 7px;
+    padding: 5px 15px;
 }
 
 .header {
@@ -41,16 +41,7 @@ h1 {
     margin-bottom: 10px;
 }
 
-button {
-    background-color: transparent;
-    border: none;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.trash-icon {
-    color: rgb(221, 101, 101);
+.tasks-container {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
 }

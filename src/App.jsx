@@ -190,10 +190,10 @@ const App = () => {
             </AlertDialogBody>
 
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onClose}>
+              <Button borderRadius={50} ref={cancelRef} onClick={onClose}>
                 Cancel
               </Button>
-              <Button colorScheme="red" onClick={handleRemoveTask} ml={3}>
+              <Button borderRadius={50} colorScheme="red" onClick={handleRemoveTask} ml={3}>
                 Delete
               </Button>
             </AlertDialogFooter>
@@ -247,10 +247,10 @@ const App = () => {
             </ModalBody>
 
             <ModalFooter>
-              <Button colorScheme="blue" mr={3} onClick={saveTaskChanges}>
+              <Button borderRadius={50} colorScheme="blue" mr={3} onClick={saveTaskChanges}>
                 Save
               </Button>
-              <Button onClick={onEditModalClose}>Cancel</Button>
+              <Button borderRadius={50} onClick={onEditModalClose}>Cancel</Button>
             </ModalFooter>
           </ModalContent>
         </Modal>

@@ -40,7 +40,7 @@ const PriorityColumn = ({
             </MenuList>
           </Menu>
         </div>
-        <div>
+        <div className="tasks-container">
           {tasks &&
             tasks.map((task, index) => (
               <TaskCard

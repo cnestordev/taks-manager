@@ -25,6 +25,7 @@ import {
   Select,
 } from "@chakra-ui/react";
 import { WarningIcon } from "@chakra-ui/icons";
+import Navbar from "./components/Navbar";
 
 const App = () => {
   const items = JSON.parse(localStorage.getItem("tasks")) || [];
@@ -169,6 +170,7 @@ const App = () => {
 
   return (
     <div className="container">
+      <Navbar />
       {/* Delete Confirmation Modal */}
       <AlertDialog
         isOpen={isOpen}

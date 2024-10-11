@@ -21,13 +21,13 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { DragDropContext } from "@hello-pangea/dnd";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import "../App.css";
 import FormContainer from "../components/FormContainer";
 import Navbar from "../components/Navbar";
 import PriorityColumn from "../components/PriorityColumn";
 
-import { createTask } from "../api/index";
+import { createTask, updateTaskOrder } from "../api/index";
 import { useUser } from "../context/UserContext";
 
 const Dashboard = () => {
@@ -51,7 +51,6 @@ const Dashboard = () => {
   const initialRef = useRef(null);
   const finalRef = useRef(null);
 
-
   const addTask = async (e) => {
     e.preventDefault();
 
@@ -63,16 +62,14 @@ const Dashboard = () => {
     try {
       const { data } = await createTask({ title, description, priority });
       if (data.statusCode === 201 && data.tasks) {
-        updateTasks(data.tasks)
+        updateTasks(data.tasks);
+        setError("");
       } else {
-        throw new Error("Error creating a new task")
+        throw new Error("Error creating a new task");
       }
     } catch (error) {
       console.log(error);
     }
-
-    // setError("");
-    // setTasks([...tasks, { title, description, priority, id: generateId() }]);
   };
 
   const deleteTask = (task) => {
@@ -99,16 +96,29 @@ const Dashboard = () => {
     }
   };
 
-  // const saveTaskChanges = () => {
-  //   const updatedTasks = tasks.map((task) =>
-  //     task.id === selectedTask.id
-  //       ? { ...task, title, description, priority }
-  //       : task
-  //   );
-  //   setTasks(updatedTasks);
-  //   setSelectedTask(null);
-  //   onEditModalClose();
-  // };
+  const saveTaskChanges = async () => {
+    const originalTasks = Array.from(user.tasks);
+    const updatedTasks = user.tasks.map((task) =>
+      task._id === selectedTask._id
+        ? { ...task, title, description, priority }
+        : task
+    );
+
+    // Optimistic UI update - update the task immediately
+    updateTasks(updatedTasks);
+
+    try {
+      // Send the updated tasks array to the server in the background
+      const { data } = await updateTaskOrder(updatedTasks);
+      // re-sync the tasks if the server returns something different
+      updateTasks(data.tasks);
+    } catch (error) {
+      console.error("Error updating task order:", error);
+      updateTasks(originalTasks);
+    }
+    setSelectedTask(null);
+    onEditModalClose();
+  };
 
   // const toggleExpand = (taskId) => {
   //   setTasks(
@@ -118,7 +128,7 @@ const Dashboard = () => {
   //   );
   // };
 
-  const handleDragEnd = (result) => {
+  const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
 
     if (!destination) return;
@@ -130,10 +140,11 @@ const Dashboard = () => {
       return;
     }
 
-    const updatedTasks = Array.from(tasks);
+    const originalTasks = Array.from(user.tasks);
+    const updatedTasks = Array.from(user.tasks);
 
     const sourceIndex = updatedTasks.findIndex(
-      (task) => task.id === draggableId
+      (task) => task._id === draggableId
     );
     const movedTask = {
       ...updatedTasks[sourceIndex],
@@ -159,7 +170,18 @@ const Dashboard = () => {
       movedTask
     );
 
+    // Optimistic UI update - update the tasks immediately
     updateTasks(updatedTasks);
+
+    try {
+      // Send the updated tasks array to the server in the background
+      const { data } = await updateTaskOrder(updatedTasks);
+      // re-sync the tasks if the server returns something different
+      updateTasks(data.tasks);
+    } catch (error) {
+      console.error("Error updating task order:", error);
+      updateTasks(originalTasks);
+    }
   };
 
   // const toggleTaskExpansion = (priority, boolean) => {
@@ -272,7 +294,7 @@ const Dashboard = () => {
                 borderRadius={50}
                 colorScheme="blue"
                 mr={3}
-                // onClick={saveTaskChanges}
+                onClick={saveTaskChanges}
               >
                 Save
               </Button>

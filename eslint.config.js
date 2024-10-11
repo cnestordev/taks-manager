@@ -1,20 +1,21 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import react from 'eslint-plugin-react'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
+import js from '@eslint/js';
+import globals from 'globals';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
   { ignores: ['dist'] },
+  // Frontend Configuration
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['src/**/*.{js,jsx}'], // Apply to all frontend files in 'src' directory
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       globals: globals.browser,
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
-        sourceType: 'module',
       },
     },
     settings: { react: { version: '18.3' } },
@@ -35,4 +36,18 @@ export default [
       ],
     },
   },
-]
+  // Backend Configuration
+  {
+    files: ['backend/**/*.js'], // Apply to all backend files in 'backend' directory
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'script', // Use script mode for CommonJS (`require`/`module.exports`)
+      globals: globals.node, // Use Node.js globals (`__dirname`, `module`, etc.)
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      'no-undef': 'off', // Disable 'no-undef' for Node.js globals (`require`, `module`, etc.)
+      'no-console': 'off', // Allow console statements in backend files
+    },
+  },
+];

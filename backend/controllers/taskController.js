@@ -35,3 +35,30 @@ exports.createTask = async (req, res) => {
         return res.status(401).json(createResponse(401, 'User not authenticated'));
     }
 };
+
+exports.updateTaskOrder = async (req, res) => {
+    if (req.isAuthenticated()) {
+        try {
+            const tasks = req.body;
+
+            if (!Array.isArray(tasks)) {
+                return res.status(400).json({ message: 'Tasks must be an array.' });
+            }
+
+            // Replace the user's existing tasks array with the reordered tasks array
+            req.user.tasks = tasks;
+
+            // Save the updated user document
+            await req.user.save();
+
+            // Return the updated task list
+            return res.status(200).json({ message: 'Tasks updated successfully', tasks: req.user.tasks });
+        } catch (error) {
+            console.error('Error updating tasks:', error);
+            return res.status(500).json({ message: 'An error occurred while updating the tasks.' });
+        }
+    } else {
+        return res.status(401).json({ message: 'User not authenticated' });
+    }
+};
+

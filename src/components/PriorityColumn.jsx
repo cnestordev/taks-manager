@@ -47,7 +47,7 @@ const PriorityColumn = ({
                 toggleExpand={toggleExpand}
                 deleteTask={deleteTask}
                 editTask={editTask}
-                key={task.id}
+                key={task._id}
                 task={task}
                 index={index}
               />

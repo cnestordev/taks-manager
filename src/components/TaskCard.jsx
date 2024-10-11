@@ -17,7 +17,7 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
   };
 
   return (
-    <Draggable key={task.id} draggableId={task.id} index={index}>
+    <Draggable key={task._id} draggableId={task._id} index={index}>
       {(provided) => (
         <Box
           ref={provided.innerRef}

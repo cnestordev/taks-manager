@@ -11,7 +11,10 @@ const sessionConfig = session({
         autoRemove: 'native'
     }),
     cookie: {
-        maxAge: 2 * 24 * 60 * 60 * 1000
+        httpOnly: true,
+        secure: false,
+        maxAge: 2 * 24 * 60 * 60 * 1000,
+        sameSite: 'Lax'
     }
 });
 

@@ -1,49 +1,52 @@
 .column {
-    background-color: #fff;
-    box-sizing: border-box;
-    border-radius: 20px;
-    flex-basis: 33%;
-    padding: 0 0 5px 0;
+  background-color: #ebedf0;
+  box-sizing: border-box;
+  border-radius: 20px;
+  flex-basis: 33%;
+  padding: 0 0 5px 0;
 }
 
 .header {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px;
-    border-radius: 20px;
-    margin: 8px;
-    box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  border-radius: 20px;
+  margin: 8px;
+  box-sizing: border-box;
 }
 
 .header-high {
-    background: linear-gradient(102.2deg, rgb(250, 45, 66) 9.6%, rgb(245, 104, 104) 96.1%);
+  background-color: #e9c0c0;
+  border-radius: 20px;
 }
 
 .header-medium {
-    background: linear-gradient(109.6deg, rgb(255, 207, 84) 11.2%, rgb(255, 158, 27) 91.1%);
+  background-color: #ffe6b2;
+  border-radius: 20px;
 }
 
 .header-low {
-    background: radial-gradient(circle at 10% 20%, rgb(254, 255, 165) 0%, rgb(255, 232, 182) 90%);
+  background-color: #fff4e6;
+  border-radius: 20px;
 }
 
 .title {
-    padding: 5px 15px;
-    border-radius: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  padding: 5px 15px;
+  border-radius: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 h1 {
-    text-align: center;
-    font-size: 17px;
-    font-weight: bold;
-    margin-bottom: 10px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .tasks-container {
-    display: flex;
-    flex-direction: column;
-    padding: 0 15px;
+  display: flex;
+  flex-direction: column;
+  padding: 0 15px;
 }

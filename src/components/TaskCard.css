@@ -1,5 +1,5 @@
 .task-card {
-  background-color: #e9f3ff;
+  background-color: #f5f6f7;
   border-radius: 15px;
   padding: 25px;
   margin-bottom: 20px;
@@ -45,37 +45,26 @@ p {
   text-align: center;
 }
 
-.task-btns {
-  padding: 5px 12px;
-  line-height: 1.2;
-  border-radius: 50px;
-  font-weight: 500;
-  min-width: 80px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
 .delete-btn {
-  border:1px solid #fa2f43;
-  color: #fa2f43;
-  transition: 300ms;
+  border:1px solid #fa2f43 !important;
+  color: #fa2f43 !important;
+  transition: 300ms !important;
 }
 
 .delete-btn:hover {
-  background-color: #fa2f43;
-  color: #fff;
-  transition: 300ms;
+  background-color: #fa2f43 !important;
+  color: #fff !important;
+  transition: 300ms !important;
 }
 
 .edit-btn {
-  border: 1px solid #d7d7d7;
-  color: #676767;
-  transition: 300ms;
+  border: 1px solid #d7d7d7 !important;
+  color: #676767 !important;
+  transition: 300ms !important;
 }
 
 .edit-btn:hover {
-  background-color: #bfbfbf;
-  color: #fff;
-  transition: 300ms;
+  background-color: #bfbfbf !important;
+  color: #fff !important;
+  transition: 300ms !important;
 }

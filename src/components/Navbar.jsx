@@ -1,17 +1,18 @@
 import { useUser } from "../context/UserContext";
 import LogoutButton from "./LogoutButton";
 
-import "./Navbar.css"
+import "./Navbar.css";
 
-const Navbar = () => {
+const Navbar = ({ children }) => {
   const { user } = useUser();
 
   return (
-    <div className="navbar-container" >
+    <div className="navbar-container">
       <span>
         Welcome, <strong>{user.username}</strong>!
       </span>
       <LogoutButton />
+      {children}
     </div>
   );
 };

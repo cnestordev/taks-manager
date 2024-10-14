@@ -170,7 +170,19 @@ const Dashboard = () => {
 
   return (
     <div className="container">
-      <Navbar />
+      <Navbar>
+        {/* Form to Add New Task */}
+        <FormContainer
+          title={title}
+          description={description}
+          priority={priority}
+          error={error}
+          setTitle={setTitle}
+          setDescription={setDescription}
+          setPriority={setPriority}
+          addTask={addTask}
+        />
+      </Navbar>
 
       {/* Delete Task Modal */}
       <DeleteTaskModal
@@ -237,18 +249,6 @@ const Dashboard = () => {
             />
           ))}
         </div>
-
-        {/* Form to Add New Task */}
-        <FormContainer
-          title={title}
-          description={description}
-          priority={priority}
-          error={error}
-          setTitle={setTitle}
-          setDescription={setDescription}
-          setPriority={setPriority}
-          addTask={addTask}
-        />
       </DragDropContext>
     </div>
   );

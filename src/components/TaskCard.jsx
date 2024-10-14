@@ -5,6 +5,7 @@ import {
   AccordionItem,
   AccordionPanel,
   Box,
+  Button,
   Flex
 } from "@chakra-ui/react";
 import { Draggable } from "@hello-pangea/dnd";
@@ -44,7 +45,7 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
                   {task.description}
                 </Box>
                 <Flex gap="30px" justifyContent="center" marginTop="4">
-                  <button
+                  <Button
                     aria-label="Delete Task"
                     size="sm"
                     className="task-btns delete-btn"
@@ -54,9 +55,9 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
                     }}
                   >
                     Delete
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     aria-label="Edit Task"
                     icon={<FaEdit />}
                     size="sm"
@@ -67,7 +68,7 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
                     }}
                   >
                     Edit
-                  </button>
+                  </Button>
                 </Flex>
               </AccordionPanel>
             </AccordionItem>

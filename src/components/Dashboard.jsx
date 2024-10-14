@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [priority, setPriority] = useState("High");
   const [error, setError] = useState("");
   const [selectedTask, setSelectedTask] = useState(null);
+  const [activeColumn, setActiveColumn] = useState(null);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -165,6 +166,16 @@ const Dashboard = () => {
     }
   };
 
+  const onDragUpdate = (update) => {
+    const { destination } = update;
+
+    if (destination) {
+      setActiveColumn(destination.droppableId);
+    } else {
+      setActiveColumn(null);
+    }
+  };
+
   // Priorities for tasks (columns)
   const priorities = ["High", "Medium", "Low"];
 
@@ -209,8 +220,10 @@ const Dashboard = () => {
 
       {/* Drag and Drop Context */}
       <DragDropContext
+        onDragUpdate={onDragUpdate}
         onDragEnd={async (result) => {
           try {
+            setActiveColumn(null);
             await handleDragEnd(result, user, updateTasks, updateTaskOrder);
           } catch (error) {
             console.error("Error handling drag end:", error);
@@ -245,6 +258,7 @@ const Dashboard = () => {
               tasks={user.tasks.filter(
                 (task) => task.priority === priority && !task.isDeleted
               )}
+              isActive={activeColumn === priority}
               id={priority}
             />
           ))}

@@ -1,7 +1,7 @@
 import {
   ChevronDownIcon,
   ChevronUpIcon,
-  HamburgerIcon
+  HamburgerIcon,
 } from "@chakra-ui/icons";
 import {
   IconButton,
@@ -22,8 +22,9 @@ const PriorityColumn = ({
   toggleTaskExpansion,
   toggleExpand,
   id,
+  isActive,
 }) => (
-  <div className="column">
+  <div className={`column ${isActive ? "active" : ""}`}>
     <div className={`header header-${priority.toLowerCase()}`}>
       <div></div>
       <h1 className="title">{priority} Priority</h1>

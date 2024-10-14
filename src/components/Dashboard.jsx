@@ -31,15 +31,13 @@ const Dashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Add a new task
-  const addTask = async (e, cb) => {
-    e.preventDefault();
-    if (!title || !description) {
-      setError("All fields required");
-      return;
-    }
-
+  const addTask = async (formData, cb) => {
     try {
-      const { data } = await createTask({ title, description, priority });
+      const { data } = await createTask({
+        title: formData.title,
+        description: formData.description,
+        priority: formData.priority,
+      });
       if (data.statusCode === 201 && data.tasks) {
         updateTasks(data.tasks);
         setError("");

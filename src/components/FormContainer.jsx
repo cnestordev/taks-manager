@@ -1,5 +1,4 @@
 import "./FormContainer.css";
-import React from "react";
 import {
   Drawer,
   DrawerBody,
@@ -14,24 +13,36 @@ import {
   Select,
   FormControl,
   FormLabel,
-  Text,
   useDisclosure,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 
 import { AddIcon } from "@chakra-ui/icons";
+import { TaskSchema } from "../validation/taskValidation";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useRef } from "react";
 
-const FormContainer = ({
-  title,
-  description,
-  priority,
-  error,
-  setTitle,
-  setDescription,
-  setPriority,
-  addTask,
-}) => {
+const FormContainer = ({ addTask }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const btnRef = React.useRef();
+  const btnRef = useRef();
+
+  // React Hook Form  validation
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: yupResolver(TaskSchema),
+    mode: "onBlur",
+  });
+
+  const onSubmit = async (data, e) => {
+    e.preventDefault();
+    await addTask(data, onClose);
+    reset();
+  };
 
   return (
     <div className="form-container">
@@ -50,51 +61,46 @@ const FormContainer = ({
           <DrawerCloseButton />
           <DrawerHeader>Add New Task</DrawerHeader>
 
-          <form onSubmit={(e) => {addTask(e, onClose)}}>
+          <form onSubmit={(e) => handleSubmit((data) => onSubmit(data, e))(e)}>
             <DrawerBody>
               {/* Title Input */}
-              <FormControl isRequired>
+              <FormControl isInvalid={errors.title} isRequired>
                 <FormLabel htmlFor="title">Title:</FormLabel>
                 <Input
                   id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter task title"
+                  {...register("title")}
                 />
+                <FormErrorMessage>{errors.title?.message}</FormErrorMessage>
               </FormControl>
 
               {/* Description Input */}
-              <FormControl mt={4}>
+              <FormControl isInvalid={errors.description} mt={4}>
                 <FormLabel htmlFor="description">Description:</FormLabel>
                 <Textarea
                   id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="Enter task description"
+                  {...register("description")}
                 />
+                <FormErrorMessage>
+                  {errors.description?.message}
+                </FormErrorMessage>
               </FormControl>
 
               {/* Priority Select */}
-              <FormControl mt={4} isRequired>
+              <FormControl isInvalid={errors.priority} mt={4} isRequired>
                 <FormLabel htmlFor="priority">Priority:</FormLabel>
                 <Select
                   id="priority"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
                   placeholder="Select priority"
+                  {...register("priority")}
                 >
                   <option value="High">High</option>
                   <option value="Medium">Medium</option>
                   <option value="Low">Low</option>
                 </Select>
+                <FormErrorMessage>{errors.priority?.message}</FormErrorMessage>
               </FormControl>
-
-              {/* Error Message */}
-              {error && (
-                <Text color="red.500" mt={4}>
-                  {error}
-                </Text>
-              )}
             </DrawerBody>
 
             <DrawerFooter>

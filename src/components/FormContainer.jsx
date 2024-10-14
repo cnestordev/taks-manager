@@ -50,7 +50,7 @@ const FormContainer = ({
           <DrawerCloseButton />
           <DrawerHeader>Add New Task</DrawerHeader>
 
-          <form onSubmit={addTask}>
+          <form onSubmit={(e) => {addTask(e, onClose)}}>
             <DrawerBody>
               {/* Title Input */}
               <FormControl isRequired>

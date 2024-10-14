@@ -1,34 +1,20 @@
-import { WarningIcon } from "@chakra-ui/icons";
-import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Select,
-  useDisclosure,
-} from "@chakra-ui/react";
 import { DragDropContext } from "@hello-pangea/dnd";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import "../App.css";
 import FormContainer from "../components/FormContainer";
 import Navbar from "../components/Navbar";
 import PriorityColumn from "../components/PriorityColumn";
-
-import { createTask, updateTaskOrder } from "../api/index";
 import { useUser } from "../context/UserContext";
+import { createTask, updateTaskOrder } from "../api/index";
+import {
+  updateTasksOptimistically,
+  handleDragEnd,
+  toggleExpand,
+  toggleTaskExpansion,
+  handleRemoveTask,
+} from "../utils/taskUtils";
+import EditTaskModal from "../components/EditTaskModal";
+import DeleteTaskModal from "../components/DeleteTaskModal";
 
 const Dashboard = () => {
   const { user, updateTasks } = useUser();
@@ -37,24 +23,15 @@ const Dashboard = () => {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("High");
   const [error, setError] = useState("");
-
   const [selectedTask, setSelectedTask] = useState(null);
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const {
-    isOpen: isEditModalOpen,
-    onOpen: onEditModalOpen,
-    onClose: onEditModalClose,
-  } = useDisclosure();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const cancelRef = useRef();
-  const initialRef = useRef(null);
-  const finalRef = useRef(null);
-
-  const addTask = async (e) => {
+  // Add a new task
+  const addTask = async (e, cb) => {
     e.preventDefault();
-
-    if (title === "" || description === "") {
+    if (!title || !description) {
       setError("All fields required");
       return;
     }
@@ -64,6 +41,10 @@ const Dashboard = () => {
       if (data.statusCode === 201 && data.tasks) {
         updateTasks(data.tasks);
         setError("");
+        cb();
+        setTitle("");
+        setDescription("");
+        setPriority("");
       } else {
         throw new Error("Error creating a new task");
       }
@@ -72,252 +53,99 @@ const Dashboard = () => {
     }
   };
 
-  const deleteTask = (task) => {
-    setSelectedTask(task);
-    onOpen();
-  };
-
-  const editTask = (task) => {
-    if (task) {
-      setSelectedTask(task);
-      setTitle(task.title);
-      setDescription(task.description);
-      setPriority(task.priority);
-      onEditModalOpen();
-    }
-  };
-
-  const updateTasksOptimistically = async (updateFunction) => {
-    const originalTasks = Array.from(user.tasks);
-    const updatedTasks = updateFunction(originalTasks);
-
-    // Optimistic UI update - update the tasks immediately
-    updateTasks(updatedTasks);
-
-    try {
-      // Send the updated tasks array to the server in the background
-      const { data } = await updateTaskOrder(updatedTasks);
-      // Re-sync the tasks if the server returns something different
-      updateTasks(data.tasks);
-    } catch (error) {
-      console.error("Error updating task order:", error);
-      // Rollback to original tasks
-      updateTasks(originalTasks);
-    }
-  };
-
+  // Save changes when editing a task
   const saveTaskChanges = async () => {
-    await updateTasksOptimistically((originalTasks) =>
-      originalTasks.map((task) =>
-        task._id === selectedTask._id
-          ? { ...task, title, description, priority }
-          : task
-      )
+    await updateTasksOptimistically(
+      user,
+      (originalTasks) =>
+        originalTasks.map((task) =>
+          task._id === selectedTask._id
+            ? { ...task, title, description, priority }
+            : task
+        ),
+      updateTasks,
+      updateTaskOrder
     );
     setSelectedTask(null);
-    onEditModalClose();
+    setIsEditModalOpen(false);
   };
 
-  const toggleExpand = async (selectedTask) => {
-    await updateTasksOptimistically((originalTasks) =>
-      originalTasks.map((task) =>
-        task._id === selectedTask._id
-          ? { ...task, isExpanded: !task.isExpanded }
-          : task
-      )
-    );
-  };
-
-  const handleRemoveTask = async () => {
-    await updateTasksOptimistically((originalTasks) =>
-      originalTasks.map((task) =>
-        task._id === selectedTask._id
-          ? { ...task, isDeleted: true }
-          : task
-      )
-    );
-    setSelectedTask(null);
-    onClose();
-  };
-
-  const handleDragEnd = async (result) => {
-    const { destination, source, draggableId } = result;
-
-    if (!destination) return;
-
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-
-    await updateTasksOptimistically((originalTasks) => {
-      const updatedTasks = Array.from(originalTasks);
-
-      const sourceIndex = updatedTasks.findIndex(
-        (task) => task._id === draggableId
-      );
-      const movedTask = {
-        ...updatedTasks[sourceIndex],
-        priority: destination.droppableId,
-      };
-
-      updatedTasks.splice(sourceIndex, 1);
-
-      const destinationPriorityTasks = updatedTasks.filter(
-        (task) => task.priority === destination.droppableId
-      );
-      const destinationIndex =
-        destinationPriorityTasks.length >= destination.index
-          ? destination.index
-          : destinationPriorityTasks.length;
-
-      updatedTasks.splice(
-        destinationIndex +
-          updatedTasks.findIndex(
-            (task) => task.priority === destination.droppableId
-          ),
-        0,
-        movedTask
-      );
-
-      return updatedTasks;
-    });
-  };
-
-  const toggleTaskExpansion = async (priority, boolean) => {
-    await updateTasksOptimistically((originalTasks) =>
-      originalTasks.map((task) =>
-        task.priority === priority && task.isExpanded !== boolean
-          ? { ...task, isExpanded: boolean }
-          : task
-      )
-    );
-  };
-
+  // Priorities for tasks (columns)
   const priorities = ["High", "Medium", "Low"];
 
   return (
     <div className="container">
       <Navbar />
-      {/* Delete Confirmation Modal */}
-      <AlertDialog
-        isOpen={isOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onClose}
-        size="xl"
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              <WarningIcon /> Delete Task
-            </AlertDialogHeader>
 
-            <AlertDialogBody>
-              <p className="modal-delete-message">
-                Are you sure you want to delete this task?
-              </p>
-              <p className="modal-task-title">
-                {selectedTask && selectedTask.title}
-              </p>
-            </AlertDialogBody>
-
-            <AlertDialogFooter>
-              <Button borderRadius={50} ref={cancelRef} onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                borderRadius={50}
-                colorScheme="red"
-                onClick={handleRemoveTask}
-                ml={3}
-              >
-                Delete
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+      {/* Delete Task Modal */}
+      <DeleteTaskModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        taskTitle={selectedTask ? selectedTask.title : ""}
+        handleRemoveTask={() => {
+          handleRemoveTask(selectedTask, user, updateTasks, updateTaskOrder);
+          setIsDeleteModalOpen(false);
+        }}
+      />
 
       {/* Edit Task Modal */}
       {selectedTask && (
-        <Modal
-          initialFocusRef={initialRef}
-          finalFocusRef={finalRef}
+        <EditTaskModal
           isOpen={isEditModalOpen}
-          onClose={onEditModalClose}
-        >
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Edit Task</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody pb={6}>
-              <FormControl>
-                <FormLabel>Title</FormLabel>
-                <Input
-                  ref={initialRef}
-                  placeholder="Task Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl mt={4}>
-                <FormLabel>Description</FormLabel>
-                <Input
-                  placeholder="Task Description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl mt={4}>
-                <FormLabel>Priority</FormLabel>
-                <Select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                >
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </Select>
-              </FormControl>
-            </ModalBody>
-
-            <ModalFooter>
-              <Button
-                borderRadius={50}
-                colorScheme="blue"
-                mr={3}
-                onClick={saveTaskChanges}
-              >
-                Save
-              </Button>
-              <Button borderRadius={50} onClick={onEditModalClose}>
-                Cancel
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+          onClose={() => setIsEditModalOpen(false)}
+          title={title}
+          setTitle={setTitle}
+          description={description}
+          setDescription={setDescription}
+          priority={priority}
+          setPriority={setPriority}
+          saveTaskChanges={saveTaskChanges}
+        />
       )}
 
       {/* Drag and Drop Context */}
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext
+        onDragEnd={(result) =>
+          handleDragEnd(result, user, updateTasks, updateTaskOrder)
+        }
+      >
         <div className="columns-container">
           {priorities.map((priority) => (
             <PriorityColumn
               key={priority}
-              toggleExpand={toggleExpand}
-              deleteTask={deleteTask}
-              editTask={editTask}
-              toggleTaskExpansion={toggleTaskExpansion}
+              toggleExpand={(task) =>
+                toggleExpand(task, user, updateTasks, updateTaskOrder)
+              }
+              deleteTask={(task) => {
+                setSelectedTask(task);
+                setIsDeleteModalOpen(true);
+              }}
+              editTask={(task) => {
+                setSelectedTask(task);
+                setTitle(task.title);
+                setDescription(task.description);
+                setPriority(task.priority);
+                setIsEditModalOpen(true);
+              }}
+              toggleTaskExpansion={(expandAll) =>
+                toggleTaskExpansion(
+                  priority,
+                  expandAll,
+                  user,
+                  updateTasks,
+                  updateTaskOrder
+                )
+              }
               priority={priority}
-              tasks={user.tasks.filter((task) => task.priority === priority && !task.isDeleted)}
+              tasks={user.tasks.filter(
+                (task) => task.priority === priority && !task.isDeleted
+              )}
               id={priority}
             />
           ))}
         </div>
+
+        {/* Form to Add New Task */}
         <FormContainer
           title={title}
           description={description}

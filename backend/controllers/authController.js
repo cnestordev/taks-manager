@@ -58,7 +58,7 @@ exports.login = (req, res, next) => {
             res.status(200).json(createResponse(200, 'Login successful', {
                 id: user._id,
                 username: user.username,
-                email: user.email,
+                tasks: user.tasks
             }));
         });
     })(req, res, next);

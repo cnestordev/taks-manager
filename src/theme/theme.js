@@ -1,4 +1,3 @@
-// theme.js
 import { extendTheme } from '@chakra-ui/react';
 
 const theme = extendTheme({
@@ -13,6 +12,9 @@ const theme = extendTheme({
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'background-color 0.2s ease, color 0.2s ease',
+            },
+            defaultProps: {
+                variant: 'outline',
             },
         },
         Toast: {

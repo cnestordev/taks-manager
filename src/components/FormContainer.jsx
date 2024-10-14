@@ -46,8 +46,8 @@ const FormContainer = ({ addTask }) => {
 
   return (
     <div className="form-container">
-      <Button variant="solid" ref={btnRef} colorScheme="blue" onClick={onOpen}>
-        <AddIcon />
+      <Button ref={btnRef} colorScheme="blue" onClick={onOpen}>
+        <AddIcon boxSize={6} />{" "}
       </Button>
       <Drawer
         isOpen={isOpen}

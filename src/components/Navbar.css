@@ -7,10 +7,30 @@
     border-radius: 20px;
 }
 
+.navbar-user-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.navbar-user-greeting {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.greeting-text {
+    color: #828e9f;
+}
+
+.greeting-name {
+    color: #5c636d;
+}
+
 .nav-welcome-text {
     font-size: 20px;
     font-weight: 700;
-    color: #3f4f6a;
 }
 
 .navbar-right {

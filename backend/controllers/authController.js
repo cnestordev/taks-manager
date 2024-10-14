@@ -38,6 +38,7 @@ exports.register = async (req, res, next) => {
             return res.status(201).json(createResponse(201, 'Registration and login successful', {
                 id: newUser._id,
                 username: newUser.username,
+                tasks: newUser.tasks
             }));
         });
     } catch (error) {

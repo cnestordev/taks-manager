@@ -1,18 +1,19 @@
 .container {
+  box-sizing: border-box;
   background-color: #f5faff;
   display: flex;
-  gap: 5px;
+  flex-direction: column;
   height: 100vh;
-  justify-content: space-between;
-  padding: 5px 50px;
 }
 
 .columns-container {
   display: flex;
   flex-direction: row;
   gap: 10px;
-  flex-basis: 70%;  
-  padding: 5px 10px;
+  flex-basis: 95%;
+  background: #dffff2;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .modal-task-title {

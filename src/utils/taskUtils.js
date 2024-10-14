@@ -4,24 +4,27 @@ export const updateTasksOptimistically = async (
     updateFunction,
     updateTasks,
     updateTaskOrder
-) => {
+  ) => {
     const originalTasks = Array.from(user.tasks);
     const updatedTasks = updateFunction(originalTasks);
-
+  
     // Optimistic UI update
     updateTasks(updatedTasks);
-
+  
     try {
-        // Send the updated tasks array to the server
-        const { data } = await updateTaskOrder(updatedTasks);
-        // Re-sync the tasks if the server returns something different
-        updateTasks(data.tasks);
+      // Send the updated tasks array to the server
+      const { data } = await updateTaskOrder(updatedTasks);
+      // Re-sync the tasks if the server returns something different
+      updateTasks(data.tasks);
     } catch (error) {
-        console.error("Error updating task order:", error);
-        // Rollback to original tasks if an error occurs
-        updateTasks(originalTasks);
+      console.error("Error updating task order:", error);
+      // Rollback to original tasks if an error occurs
+      updateTasks(originalTasks);
+  
+      // Throw the error to let the caller handle it (show a toast)
+      throw new Error("Task update failed on the server.");
     }
-};
+  };  
 
 // Handle task drag-and-drop logic
 export const handleDragEnd = async (result, user, updateTasks, updateTaskOrder) => {
@@ -79,6 +82,8 @@ export const toggleExpand = async (task, user, updateTasks, updateTaskOrder) => 
 
 // Expand or collapse all tasks in a priority
 export const toggleTaskExpansion = async (priority, expandAll, user, updateTasks, updateTaskOrder) => {
+    console.log(priority)
+    console.log(expandAll)
     await updateTasksOptimistically(
         user,
         (originalTasks) =>

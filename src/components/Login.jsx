@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box,
@@ -10,37 +9,63 @@ import {
   VStack,
   Text,
   Link,
+  FormErrorMessage,
+  useToast,
+  InputGroup,
+  InputRightElement,
+  Icon,
 } from "@chakra-ui/react";
 import { useUser } from "../context/UserContext";
 import { login } from "../api";
+import { LoginSchema } from "../validation/userValidation";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
+import { useState } from "react";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { login: loginUser } = useUser();
   const navigate = useNavigate();
+  const toast = useToast();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: yupResolver(LoginSchema),
+    mode: "onBlur",
+  });
+
+  const handleLogin = async (data) => {
+    const { username, password } = data;
 
     try {
       const { data } = await login(username, password);
-      console.log(data);
 
-      // Check if the status code indicates success
       if (data.statusCode === 200 && data.user) {
         loginUser(data.user);
         navigate("/dashboard");
       } else {
-        // Handle different responses based on status code or message
-        setError(data.message || "Login failed");
+        throw new Error(data.error);
       }
     } catch (error) {
-      // General error handling for network issues or unexpected errors
-      setError("Invalid username or password");
+      toast({
+        title: "Error",
+        description: "Login Failed",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      console.log(error);
     }
+    reset();
+    setShowPassword(false)
   };
+
+  const handlePasswordToggle = () => setShowPassword(!showPassword);
 
   return (
     <Box
@@ -52,27 +77,37 @@ const Login = () => {
       borderRadius="lg"
     >
       <Heading mb="6">Login</Heading>
-      {error && <Text color="red.500">{error}</Text>}
-      <form onSubmit={handleLogin}>
+      <form onSubmit={handleSubmit(handleLogin)}>
         <VStack spacing="4">
-          <FormControl isRequired>
+          <FormControl isRequired isInvalid={errors.username}>
             <FormLabel htmlFor="username">Username</FormLabel>
             <Input
               id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
+              {...register("username")}
             />
+            <FormErrorMessage>{errors.username?.message}</FormErrorMessage>
           </FormControl>
-          <FormControl isRequired>
+          <FormControl isRequired isInvalid={errors.password}>
             <FormLabel htmlFor="password">Password</FormLabel>
-            <Input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-            />
+            <InputGroup>
+              <Input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                placeholder="Enter your password"
+                {...register("password")}
+              />
+              <InputRightElement width="4.5rem">
+                <Button h="1.75rem" size="sm" onClick={handlePasswordToggle}>
+                  {showPassword ? (
+                    <Icon as={ViewOffIcon} />
+                  ) : (
+                    <Icon as={ViewIcon} />
+                  )}
+                </Button>
+              </InputRightElement>
+            </InputGroup>
+            <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
           </FormControl>
           <Button type="submit" colorScheme="green" width="full">
             Login

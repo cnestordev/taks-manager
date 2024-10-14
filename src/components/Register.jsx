@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box,
@@ -8,43 +7,81 @@ import {
   Input,
   Heading,
   VStack,
+  useToast,
+  FormErrorMessage,
+  InputRightElement,
+  InputGroup,
+  Icon,
   Text,
   Link,
 } from "@chakra-ui/react";
 import { useUser } from "../context/UserContext";
-import { register } from "../api/index";
+import { register as registerUser } from "../api/index";
+import { RegistrationSchema } from "../validation/userValidation";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useState } from "react";
+import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 
 const Register = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [showPrimary, setShowPrimary] = useState(false);
+  const [showSecondary, setShowSecondary] = useState(false);
   const { login } = useUser();
   const navigate = useNavigate();
+  const toast = useToast();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: yupResolver(RegistrationSchema),
+    mode: "onBlur",
+  });
+
+  const handleRegistration = async (formData) => {
+    const { username, password } = formData;
+
     try {
-      const { data } = await register(username, password);
-      console.log(data);
+      const { data } = await registerUser(username, password);
 
       // Check if the registration was successful
       if (data.statusCode === 201 && data.user) {
-        console.log("Registration successful");
         login(data.user);
         navigate("/dashboard");
       } else {
         // Handle any unexpected responses
-        setError(data.message || "Registration failed");
+        throw new Error(data.error);
       }
     } catch (error) {
       // Handle specific error responses
+      console.log(error);
       if (error.response && error.response.status === 400) {
-        setError("Username already exists");
+        toast({
+          title: "Error",
+          description: "Username already exists",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
       } else {
-        setError("An error occurred during registration");
+        toast({
+          title: "Error",
+          description: "An error occurred during registration",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
       }
     }
+    reset();
+    setShowPrimary(false);
+    setShowSecondary(false);
   };
+
+  const handleClick = () => setShowPrimary(!showPrimary);
+  const handleClickConfirmation = () => setShowSecondary(!showSecondary);
 
   return (
     <Box
@@ -56,34 +93,66 @@ const Register = () => {
       borderRadius="lg"
     >
       <Heading mb="6">Register</Heading>
-      {error && <Text color="red.500">{error}</Text>}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(handleRegistration)}>
         <VStack spacing="4">
-          <FormControl isRequired>
+          <FormControl isInvalid={!!errors.username} isRequired>
             <FormLabel htmlFor="username">Username</FormLabel>
             <Input
               id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              placeholder="Enter a username"
+              {...register("username")}
             />
+            <FormErrorMessage>{errors.username?.message}</FormErrorMessage>
           </FormControl>
-          <FormControl isRequired>
+          <FormControl isInvalid={!!errors.password} isRequired>
             <FormLabel htmlFor="password">Password</FormLabel>
-            <Input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-            />
+            <InputGroup>
+              <Input
+                type={showPrimary ? "text" : "password"}
+                id="password"
+                placeholder="Enter your password"
+                {...register("password")}
+              />
+              <InputRightElement width="4.5rem">
+                <Button h="1.75rem" size="sm" onClick={handleClick}>
+                  {showPrimary ? (
+                    <Icon as={ViewOffIcon} />
+                  ) : (
+                    <Icon as={ViewIcon} />
+                  )}
+                </Button>
+              </InputRightElement>
+            </InputGroup>
+            <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
+          </FormControl>
+          <FormControl isInvalid={!!errors.confirmPassword} isRequired>
+            <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+            <InputGroup size="md">
+              <Input
+                type={showSecondary ? "text" : "password"}
+                id="confirmPassword"
+                placeholder="Confirm your password"
+                {...register("confirmPassword")}
+              />
+              <InputRightElement width="4.5rem">
+                <Button h="1.75rem" size="sm" onClick={handleClickConfirmation}>
+                  {showSecondary ? (
+                    <Icon as={ViewOffIcon} />
+                  ) : (
+                    <Icon as={ViewIcon} />
+                  )}
+                </Button>
+              </InputRightElement>
+            </InputGroup>
+            <FormErrorMessage>
+              {errors.confirmPassword?.message}
+            </FormErrorMessage>
           </FormControl>
           <Button type="submit" colorScheme="green" width="full">
             Register
           </Button>
         </VStack>
       </form>
-
       <Text mt="4" textAlign="center">
         Already have an account?{" "}
         <Link as={RouterLink} to="/login" color="teal.500">

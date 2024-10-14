@@ -20,10 +20,6 @@ import { useToast } from "@chakra-ui/react";
 const Dashboard = () => {
   const { user, updateTasks } = useUser();
   const toast = useToast();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("High");
-  const [error, setError] = useState("");
   const [selectedTask, setSelectedTask] = useState(null);
   const [activeColumn, setActiveColumn] = useState(null);
 
@@ -40,12 +36,8 @@ const Dashboard = () => {
       });
       if (data.statusCode === 201 && data.tasks) {
         updateTasks(data.tasks);
-        setError("");
         // Close the modal after adding the task
         if (cb) cb();
-        setTitle("");
-        setDescription("");
-        setPriority("");
         toast({
           title: "Task created.",
           description: "Your task has been added successfully.",
@@ -94,14 +86,19 @@ const Dashboard = () => {
   };
 
   // Save changes when editing a task
-  const saveTaskChanges = async () => {
+  const saveTaskChanges = async (formData) => {
     try {
       await updateTasksOptimistically(
         user,
         (originalTasks) =>
           originalTasks.map((task) =>
             task._id === selectedTask._id
-              ? { ...task, title, description, priority }
+              ? {
+                  ...task,
+                  title: formData.title,
+                  description: formData.description,
+                  priority: formData.priority,
+                }
               : task
           ),
         updateTasks,
@@ -181,16 +178,7 @@ const Dashboard = () => {
     <div className="container">
       <Navbar>
         {/* Form to Add New Task */}
-        <FormContainer
-          title={title}
-          description={description}
-          priority={priority}
-          error={error}
-          setTitle={setTitle}
-          setDescription={setDescription}
-          setPriority={setPriority}
-          addTask={addTask}
-        />
+        <FormContainer addTask={addTask} />
       </Navbar>
 
       {/* Delete Task Modal */}
@@ -206,13 +194,8 @@ const Dashboard = () => {
         <EditTaskModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          title={title}
-          setTitle={setTitle}
-          description={description}
-          setDescription={setDescription}
-          priority={priority}
-          setPriority={setPriority}
           saveTaskChanges={saveTaskChanges}
+          selectedTask={selectedTask}
         />
       )}
 
@@ -246,9 +229,6 @@ const Dashboard = () => {
               }}
               editTask={(task) => {
                 setSelectedTask(task);
-                setTitle(task.title);
-                setDescription(task.description);
-                setPriority(task.priority);
                 setIsEditModalOpen(true);
               }}
               toggleTaskExpansion={handleToggleTaskExpansion}

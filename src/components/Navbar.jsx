@@ -8,11 +8,13 @@ const Navbar = ({ children }) => {
 
   return (
     <div className="navbar-container">
-      <span>
+      <span className="nav-welcome-text">
         Welcome, <strong>{user.username}</strong>!
       </span>
-      <LogoutButton />
-      {children}
+      <div className="navbar-right">
+        <LogoutButton />
+        {children}
+      </div>
     </div>
   );
 };

@@ -6,3 +6,13 @@
     background-color: #ebedf0;
     border-radius: 20px;
 }
+
+.nav-welcome-text {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+}

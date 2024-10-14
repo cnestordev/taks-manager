@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box,
   Button,
@@ -9,6 +9,7 @@ import {
   Heading,
   VStack,
   Text,
+  Link,
 } from "@chakra-ui/react";
 import { useUser } from "../context/UserContext";
 import { register } from "../api/index";
@@ -77,11 +78,18 @@ const Register = () => {
               placeholder="Enter your password"
             />
           </FormControl>
-          <Button type="submit" colorScheme="teal" width="full">
+          <Button type="submit" colorScheme="green" width="full">
             Register
           </Button>
         </VStack>
       </form>
+
+      <Text mt="4" textAlign="center">
+        Already have an account?{" "}
+        <Link as={RouterLink} to="/login" color="teal.500">
+          Login here
+        </Link>
+      </Text>
     </Box>
   );
 };

@@ -12,9 +12,6 @@ import { FaEdit } from "react-icons/fa";
 import "./TaskCard.css";
 
 const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
-  const toggleDescription = (id) => {
-    toggleExpand(id);
-  };
 
   return (
     <Draggable key={task._id} draggableId={task._id} index={index}>
@@ -24,7 +21,7 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           className="task-card"
-          onClick={() => toggleDescription(task.id)}
+          onClick={() => toggleExpand(task)}
         >
           <Accordion allowToggle index={task.isExpanded ? [0] : []}>
             <AccordionItem border="none">

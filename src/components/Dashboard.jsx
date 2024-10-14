@@ -77,15 +77,6 @@ const Dashboard = () => {
     onOpen();
   };
 
-  // const handleRemoveTask = () => {
-  //   if (selectedTask) {
-  //     const newTasks = tasks.filter((t) => t.id !== selectedTask.id);
-  //     setTasks(newTasks);
-  //     setSelectedTask(null);
-  //   }
-  //   onClose();
-  // };
-
   const editTask = (task) => {
     if (task) {
       setSelectedTask(task);
@@ -96,37 +87,58 @@ const Dashboard = () => {
     }
   };
 
-  const saveTaskChanges = async () => {
+  const updateTasksOptimistically = async (updateFunction) => {
     const originalTasks = Array.from(user.tasks);
-    const updatedTasks = user.tasks.map((task) =>
-      task._id === selectedTask._id
-        ? { ...task, title, description, priority }
-        : task
-    );
+    const updatedTasks = updateFunction(originalTasks);
 
-    // Optimistic UI update - update the task immediately
+    // Optimistic UI update - update the tasks immediately
     updateTasks(updatedTasks);
 
     try {
       // Send the updated tasks array to the server in the background
       const { data } = await updateTaskOrder(updatedTasks);
-      // re-sync the tasks if the server returns something different
+      // Re-sync the tasks if the server returns something different
       updateTasks(data.tasks);
     } catch (error) {
       console.error("Error updating task order:", error);
+      // Rollback to original tasks
       updateTasks(originalTasks);
     }
+  };
+
+  const saveTaskChanges = async () => {
+    await updateTasksOptimistically((originalTasks) =>
+      originalTasks.map((task) =>
+        task._id === selectedTask._id
+          ? { ...task, title, description, priority }
+          : task
+      )
+    );
     setSelectedTask(null);
     onEditModalClose();
   };
 
-  // const toggleExpand = (taskId) => {
-  //   setTasks(
-  //     tasks.map((task) =>
-  //       task.id === taskId ? { ...task, isExpanded: !task.isExpanded } : task
-  //     )
-  //   );
-  // };
+  const toggleExpand = async (selectedTask) => {
+    await updateTasksOptimistically((originalTasks) =>
+      originalTasks.map((task) =>
+        task._id === selectedTask._id
+          ? { ...task, isExpanded: !task.isExpanded }
+          : task
+      )
+    );
+  };
+
+  const handleRemoveTask = async () => {
+    await updateTasksOptimistically((originalTasks) =>
+      originalTasks.map((task) =>
+        task._id === selectedTask._id
+          ? { ...task, isDeleted: true }
+          : task
+      )
+    );
+    setSelectedTask(null);
+    onClose();
+  };
 
   const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
@@ -140,67 +152,51 @@ const Dashboard = () => {
       return;
     }
 
-    const originalTasks = Array.from(user.tasks);
-    const updatedTasks = Array.from(user.tasks);
+    await updateTasksOptimistically((originalTasks) => {
+      const updatedTasks = Array.from(originalTasks);
 
-    const sourceIndex = updatedTasks.findIndex(
-      (task) => task._id === draggableId
-    );
-    const movedTask = {
-      ...updatedTasks[sourceIndex],
-      priority: destination.droppableId,
-    };
+      const sourceIndex = updatedTasks.findIndex(
+        (task) => task._id === draggableId
+      );
+      const movedTask = {
+        ...updatedTasks[sourceIndex],
+        priority: destination.droppableId,
+      };
 
-    updatedTasks.splice(sourceIndex, 1);
+      updatedTasks.splice(sourceIndex, 1);
 
-    const destinationPriorityTasks = updatedTasks.filter(
-      (task) => task.priority === destination.droppableId
-    );
-    const destinationIndex =
-      destinationPriorityTasks.length >= destination.index
-        ? destination.index
-        : destinationPriorityTasks.length;
+      const destinationPriorityTasks = updatedTasks.filter(
+        (task) => task.priority === destination.droppableId
+      );
+      const destinationIndex =
+        destinationPriorityTasks.length >= destination.index
+          ? destination.index
+          : destinationPriorityTasks.length;
 
-    updatedTasks.splice(
-      destinationIndex +
-        updatedTasks.findIndex(
-          (task) => task.priority === destination.droppableId
-        ),
-      0,
-      movedTask
-    );
+      updatedTasks.splice(
+        destinationIndex +
+          updatedTasks.findIndex(
+            (task) => task.priority === destination.droppableId
+          ),
+        0,
+        movedTask
+      );
 
-    // Optimistic UI update - update the tasks immediately
-    updateTasks(updatedTasks);
-
-    try {
-      // Send the updated tasks array to the server in the background
-      const { data } = await updateTaskOrder(updatedTasks);
-      // re-sync the tasks if the server returns something different
-      updateTasks(data.tasks);
-    } catch (error) {
-      console.error("Error updating task order:", error);
-      updateTasks(originalTasks);
-    }
+      return updatedTasks;
+    });
   };
 
-  // const toggleTaskExpansion = (priority, boolean) => {
-  //   if (["High", "Medium", "Low"].includes(priority)) {
-  //     setTasks(
-  //       tasks.map((task) =>
-  //         task.priority === priority && task.isExpanded !== boolean
-  //           ? { ...task, isExpanded: boolean }
-  //           : task
-  //       )
-  //     );
-  //   }
-  // };
+  const toggleTaskExpansion = async (priority, boolean) => {
+    await updateTasksOptimistically((originalTasks) =>
+      originalTasks.map((task) =>
+        task.priority === priority && task.isExpanded !== boolean
+          ? { ...task, isExpanded: boolean }
+          : task
+      )
+    );
+  };
 
-  // useEffect(() => {
-  //   setTitle("");
-  //   setDescription("");
-  //   setPriority("High");
-  // }, [tasks]);
+  const priorities = ["High", "Medium", "Low"];
 
   return (
     <div className="container">
@@ -234,7 +230,7 @@ const Dashboard = () => {
               <Button
                 borderRadius={50}
                 colorScheme="red"
-                // onClick={handleRemoveTask}
+                onClick={handleRemoveTask}
                 ml={3}
               >
                 Delete
@@ -309,33 +305,18 @@ const Dashboard = () => {
       {/* Drag and Drop Context */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="columns-container">
-          <PriorityColumn
-            // toggleExpand={toggleExpand}
-            deleteTask={deleteTask}
-            editTask={editTask}
-            // toggleTaskExpansion={toggleTaskExpansion}
-            priority="High"
-            tasks={user.tasks.filter((task) => task.priority === "High")}
-            id="High"
-          />
-          <PriorityColumn
-            // toggleExpand={toggleExpand}
-            deleteTask={deleteTask}
-            editTask={editTask}
-            // toggleTaskExpansion={toggleTaskExpansion}
-            priority="Medium"
-            tasks={user.tasks.filter((task) => task.priority === "Medium")}
-            id="Medium"
-          />
-          <PriorityColumn
-            // toggleExpand={toggleExpand}
-            deleteTask={deleteTask}
-            editTask={editTask}
-            // toggleTaskExpansion={toggleTaskExpansion}
-            priority="Low"
-            tasks={user.tasks.filter((task) => task.priority === "Low")}
-            id="Low"
-          />
+          {priorities.map((priority) => (
+            <PriorityColumn
+              key={priority}
+              toggleExpand={toggleExpand}
+              deleteTask={deleteTask}
+              editTask={editTask}
+              toggleTaskExpansion={toggleTaskExpansion}
+              priority={priority}
+              tasks={user.tasks.filter((task) => task.priority === priority && !task.isDeleted)}
+              id={priority}
+            />
+          ))}
         </div>
         <FormContainer
           title={title}

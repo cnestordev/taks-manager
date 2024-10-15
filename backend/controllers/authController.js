@@ -19,18 +19,18 @@ exports.register = async (req, res, next) => {
 
     try {
         // Check if the username already exists
-        const existingUser = await User.findOne({ username });
+        const existingUser = await User.findOne({ username: username.toLowerCase() });
         if (existingUser) {
             return res.status(400).json(createResponse(400, 'Username already exists'));
         }
 
         // Hash the password and create the new user
         const passwordHash = await argon2.hash(password);
-        const newUser = new User({ username, passwordHash });
+        const newUser = new User({ username: username.toLowerCase(), passwordHash });
         await newUser.save();
 
         // Log the user in
-        req.login(newUser, (err) => {
+        req.login(newUser, async (err) => {
             if (err) {
                 return next(err);
             }
@@ -38,7 +38,7 @@ exports.register = async (req, res, next) => {
             return res.status(201).json(createResponse(201, 'Registration and login successful', {
                 id: newUser._id,
                 username: newUser.username,
-                tasks: newUser.tasks
+                tasks: []
             }));
         });
     } catch (error) {
@@ -53,12 +53,15 @@ exports.login = (req, res, next) => {
         if (err) return next(err);
         if (!user) return res.status(401).json(createResponse(401, info.message || 'Invalid credentials'));
 
-        req.logIn(user, (err) => {
+        req.logIn(user, async (err) => {
             if (err) return next(err);
+
+            // populate tasks
+            await user.populate('tasks');
 
             res.status(200).json(createResponse(200, 'Login successful', {
                 id: user._id,
-                username: user.username,
+                username: user.username.toLowerCase(),
                 tasks: user.tasks
             }));
         });

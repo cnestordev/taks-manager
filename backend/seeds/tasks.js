@@ -1,23 +1,30 @@
 // Task creation for seed data
-const createTask = () => {
+const createTask = (userId) => {
     const { title, description, priority } = generateRandomTask();
-    return (({
+    return {
         title,
         description,
         priority,
         isDeleted: false,
         isExpanded: true,
         created: new Date(),
-    }));
+        assignedTo: userId,
+    };
 };
 
+// Generate a list of tasks for a specific user
+const generateTasksForUser = (userId) => {
+    const numTasks = Math.floor(Math.random() * 5) + 3; // Generate between 3 and 7 tasks
+    return Array.from({ length: numTasks }, () => createTask(userId));
+};
+
+// Generate a random task from the predefined list
 const generateRandomTask = () => {
     const randomIndex = Math.floor(Math.random() * randomTasks.length);
-    const { title, description, priority } = randomTasks[randomIndex];
-
-    return { title, description, priority };
+    return randomTasks[randomIndex];
 };
 
+// Example task data
 const randomTasks = [
     { title: "Read a Book", description: "Read pages 20-50 of the novel Harry Potter", priority: "High" },
     { title: "Cook Dinner", description: "Lemon garlic shrimp scampi over pasta and parmesan cheese", priority: "Medium" },
@@ -79,4 +86,4 @@ const randomTasks = [
     { title: "Pay Bills", description: "Pay the electricity and internet bills for the month", priority: "High" }
 ];
 
-module.exports = { createTask };
+module.exports = { generateTasksForUser };

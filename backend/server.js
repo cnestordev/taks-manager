@@ -11,7 +11,7 @@ dotenv.config({ path: envFile });
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
-const sessionConfig = require('./middlewares/sessionConfig');
+const sessionConfig = require('./middleware/sessionConfig');
 const passport = require('./config/passportConfig');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');

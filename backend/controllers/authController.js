@@ -38,7 +38,6 @@ exports.register = async (req, res, next) => {
             return res.status(201).json(createResponse(201, 'Registration and login successful', {
                 id: newUser._id,
                 username: newUser.username,
-                tasks: []
             }));
         });
     } catch (error) {
@@ -56,22 +55,33 @@ exports.login = (req, res, next) => {
         req.logIn(user, async (err) => {
             if (err) return next(err);
 
-            // populate tasks
-            await user.populate('tasks');
-
-            res.status(200).json(createResponse(200, 'Login successful', {
-                id: user._id,
-                username: user.username.toLowerCase(),
-                tasks: user.tasks
-            }));
+            try {
+                res.status(200).json(createResponse(200, 'Login successful', {
+                    id: user._id,
+                    username: user.username.toLowerCase(),
+                }));
+            } catch (err) {
+                console.error('Error fetching tasks:', err);
+                res.status(500).json(createResponse(500, 'Internal server error', null));
+            }
         });
     })(req, res, next);
 };
 
+
 // Check if User is Logged In
-exports.checkUser = (req, res) => {
+exports.checkUser = async (req, res) => {
     if (req.isAuthenticated()) {
-        return res.status(200).json(createResponse(200, 'User is authenticated', req.user));
+        try {
+            const user = {
+                id: req.user._id,
+                username: req.user.username.toLowerCase(),
+            };
+            return res.status(200).json(createResponse(200, 'User is authenticated', user));
+        } catch (err) {
+            console.error('Error fetching tasks:', err);
+            res.status(500).json(createResponse(500, 'Internal server error', null));
+        }
     } else {
         return res.status(401).json(createResponse(401, 'User not authenticated'));
     }

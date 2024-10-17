@@ -18,6 +18,15 @@ TaskSchema.pre('findOneAndUpdate', function (next) {
     next();
 });
 
+TaskSchema.set('toJSON', {
+    transform: (doc, ret) => {
+        delete ret.__v;
+        delete ret.modified;
+        return ret;
+    }
+});
+
+
 const Task = mongoose.model('Task', TaskSchema);
 
 module.exports = Task;

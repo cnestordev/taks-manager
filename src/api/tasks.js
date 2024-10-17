@@ -1,6 +1,10 @@
 import axiosInstance from "../services/axiosInstance";
 
-// Create new Task
+// Get User tasks
+export const getTasks = async (user) => {
+    const response = await axiosInstance.get(`/task/${user.id}`);
+    return response;
+};
 
 export const createTask = async (task) => {
     const response = await axiosInstance.post('/task/create', task);

@@ -37,15 +37,10 @@ export const UserProvider = ({ children }) => {
     setUser(null);
   };
 
-  const updateTasks = (newTasks) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      tasks: newTasks,
-    }));
-  };
-
   return (
-    <UserContext.Provider value={{ user, updateTasks, login, logout, loading }}>
+    <UserContext.Provider
+      value={{ user, login, logout, loading }}
+    >
       {children}
     </UserContext.Provider>
   );

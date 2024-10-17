@@ -13,10 +13,6 @@ exports.createTask = async (req, res) => {
         try {
             const { title, description, priority } = req.body;
 
-            if (!title || !description || !priority) {
-                return res.status(400).json(createResponse(400, 'All task fields are required.'));
-            }
-
             // Create a new task document
             const newTask = new Task({
                 title,
@@ -28,12 +24,8 @@ exports.createTask = async (req, res) => {
             // Save the new Task
             await newTask.save();
 
-            // Update the User document to include the new Task's ObjectId
-            req.user.tasks.push(newTask._id);
-            await req.user.save();
-
             // Return the newly created task
-            return res.status(201).json(createResponse(201, 'Task created successfully', [newTask]));
+            return res.status(201).json(createResponse(201, 'Task created successfully', newTask));
         } catch (error) {
             console.error('Error creating task:', error);
             return res.status(500).json(createResponse(500, 'An error occurred while creating the task.'));
@@ -60,35 +52,30 @@ exports.getTasks = async (req, res) => {
     }
 };
 
-// Update task order
+// Update existing Task
 exports.updateTaskOrder = async (req, res) => {
     if (req.isAuthenticated()) {
         try {
-            const tasks = req.body;
+            const taskId = req.body._id;
 
-            if (!Array.isArray(tasks)) {
-                return res.status(400).json({ message: 'Tasks must be an array.' });
+            // Update the task directly in the database
+            const task = await Task.findOneAndUpdate(
+                { _id: taskId, assignedTo: req.user._id },
+                req.body,
+                { new: true } // Return updated document
+            );
+
+            if (!task) {
+                return res.status(404).json({ message: 'Task not found or not assigned to the user.' });
             }
 
-            // Verify that all tasks are assigned to the user
-            const assignedTasks = await Task.find({ _id: { $in: tasks }, assignedTo: req.user._id });
-
-            if (assignedTasks.length !== tasks.length) {
-                return res.status(400).json({ message: 'Some tasks are not assigned to the user.' });
-            }
-
-            // Update the user's 'tasks' array to reflect the new order
-            req.user.tasks = tasks;
-
-            // Save the updated user document
-            await req.user.save();
-
-            return res.status(200).json({ message: 'Tasks updated successfully' });
+            return res.status(200).json({ message: 'Task updated successfully', task });
         } catch (error) {
-            console.error('Error updating tasks:', error);
-            return res.status(500).json({ message: 'An error occurred while updating the tasks.' });
+            console.error('Error updating task:', error);
+            return res.status(500).json({ message: 'An error occurred while updating the task.' });
         }
     } else {
         return res.status(401).json({ message: 'User not authenticated' });
     }
 };
+

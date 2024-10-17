@@ -5,20 +5,23 @@ import FormContainer from "../components/FormContainer";
 import Navbar from "../components/Navbar";
 import PriorityColumn from "../components/PriorityColumn";
 import { useUser } from "../context/UserContext";
+import { useTask } from "../context/TaskContext";
 import { createTask, updateTaskOrder } from "../api/index";
 import {
-  updateTasksOptimistically,
   handleDragEnd,
   toggleExpand,
   toggleTaskExpansion,
   handleRemoveTask,
+  updateSelectedTask,
+  handleAddTask,
 } from "../utils/taskUtils";
 import EditTaskModal from "../components/EditTaskModal";
 import DeleteTaskModal from "../components/DeleteTaskModal";
 import { useToast } from "@chakra-ui/react";
 
 const Dashboard = () => {
-  const { user, updateTasks } = useUser();
+  const { user } = useUser();
+  const { tasks, addNewTask, removeTask, updateTask } = useTask();
   const toast = useToast();
   const [selectedTask, setSelectedTask] = useState(null);
   const [activeColumn, setActiveColumn] = useState(null);
@@ -27,27 +30,26 @@ const Dashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Add a new task
-  const addTask = async (formData, cb) => {
+  const addTask = async (formData, onClose) => {
+    onClose();
     try {
-      const { data } = await createTask({
-        title: formData.title,
-        description: formData.description,
-        priority: formData.priority,
+      await handleAddTask(
+        {
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+        },
+        addNewTask,
+        createTask,
+        removeTask
+      );
+      toast({
+        title: "Task created.",
+        description: "Your task has been added successfully.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
       });
-      if (data.statusCode === 201 && data.tasks) {
-        updateTasks(data.tasks);
-        // Close the modal after adding the task
-        if (cb) cb();
-        toast({
-          title: "Task created.",
-          description: "Your task has been added successfully.",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-      } else {
-        throw new Error("Error creating a new task");
-      }
     } catch (error) {
       console.log(error);
       toast({
@@ -62,7 +64,8 @@ const Dashboard = () => {
 
   const onRemoveTask = async () => {
     try {
-      await handleRemoveTask(selectedTask, user, updateTasks, updateTaskOrder);
+      const updatedTask = { ...selectedTask, isDeleted: true };
+      await handleRemoveTask(updatedTask, updateTask, updateTaskOrder);
       setSelectedTask(null);
       setIsDeleteModalOpen(false);
       toast({
@@ -88,22 +91,8 @@ const Dashboard = () => {
   // Save changes when editing a task
   const saveTaskChanges = async (formData) => {
     try {
-      await updateTasksOptimistically(
-        user,
-        (originalTasks) =>
-          originalTasks.map((task) =>
-            task._id === selectedTask._id
-              ? {
-                  ...task,
-                  title: formData.title,
-                  description: formData.description,
-                  priority: formData.priority,
-                }
-              : task
-          ),
-        updateTasks,
-        updateTaskOrder
-      );
+      const updatedData = { ...selectedTask, ...formData };
+      await updateSelectedTask(updatedData, updateTask, updateTaskOrder, selectedTask);
       setSelectedTask(null);
       setIsEditModalOpen(false);
       toast({
@@ -127,7 +116,7 @@ const Dashboard = () => {
 
   const handleToggleExpand = async (task) => {
     try {
-      await toggleExpand(task, user, updateTasks, updateTaskOrder);
+      await toggleExpand(task, user, updateTask, updateTaskOrder);
     } catch (error) {
       console.error("Error toggling task expansion:", error);
       toast({
@@ -146,7 +135,7 @@ const Dashboard = () => {
         priority,
         expandAll,
         user,
-        updateTasks,
+        updateTask,
         updateTaskOrder
       );
     } catch (error) {
@@ -205,7 +194,7 @@ const Dashboard = () => {
         onDragEnd={async (result) => {
           try {
             setActiveColumn(null);
-            await handleDragEnd(result, user, updateTasks, updateTaskOrder);
+            await handleDragEnd(result, user, updateTask, updateTaskOrder);
           } catch (error) {
             console.error("Error handling drag end:", error);
             toast({
@@ -233,8 +222,8 @@ const Dashboard = () => {
               }}
               toggleTaskExpansion={handleToggleTaskExpansion}
               priority={priority}
-              tasks={user.tasks.filter(
-                (task) => task.priority === priority && !task.isDeleted
+              tasks={tasks?.filter(
+                (task) => task?.priority === priority && !task?.isDeleted
               )}
               isActive={activeColumn === priority}
               id={priority}

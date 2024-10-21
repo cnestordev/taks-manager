@@ -30,11 +30,14 @@ export const addTaskOptimistically = async (
     addNewTask,
     updateTask,
     createTaskOnServer,
-    removeTask
+    removeTask,
+    setLoadingTaskId
 ) => {
     // Generate a temporary ID for the new task
     const tempId = `temp-${Date.now()}`;
     const tempTask = { ...newTaskData, _id: tempId, tempId, taskPosition: [{ ...newTaskData.taskPosition[0], isExpanded: true }] };
+
+    setLoadingTaskId(tempTask._id);
 
     // Optimistic UI update: Add the new task
     addNewTask(tempTask);
@@ -55,13 +58,15 @@ export const addTaskOptimistically = async (
 
         // Throw the error to let the caller handle it (e.g., show a toast)
         throw new Error("Task creation failed on the server.");
+    } finally {
+        setLoadingTaskId(null);
     }
 };
 
 // Add a new task
-export const handleAddTask = async (newTask, addNewTask, updateTask, createTaskOnServer, removeTask) => {
+export const handleAddTask = async (newTask, addNewTask, updateTask, createTaskOnServer, removeTask, setLoadingTaskId) => {
     try {
-        await addTaskOptimistically(newTask, addNewTask, updateTask, createTaskOnServer, removeTask);
+        await addTaskOptimistically(newTask, addNewTask, updateTask, createTaskOnServer, removeTask, setLoadingTaskId);
     } catch (error) {
         throw new Error(error);
     }
@@ -83,9 +88,10 @@ export const handleDragEnd = async (
     result,
     tasks,
     updateTasksOnServer,
-    updateTasks
+    updateTasks,
+    setLoadingTaskId
 ) => {
-    const { destination, source, draggableId } = result;
+    const { destination, source } = result;
 
     // If there's no destination (e.g., the task was dropped outside a droppable area), do nothing.
     if (!destination) return;
@@ -114,14 +120,15 @@ export const handleDragEnd = async (
     if (source.droppableId === destination.droppableId) {
         const removedTask = sourceTasks.splice(source.index, 1)[0];
         sourceTasks.splice(destination.index, 0, removedTask);
-        console.log(sourceTasks);
         sourceTasks.forEach((task, i) => task.position = i);
+        setLoadingTaskId(removedTask._id);
     } else {
         const removedTask = sourceTasks.splice(source.index, 1)[0];
         removedTask.priority = destination.droppableId;
         destinationTasks.splice(destination.index, 0, removedTask);
         sourceTasks.forEach((task, i) => task.position = i);
         destinationTasks.forEach((task, i) => task.position = i);
+        setLoadingTaskId(removedTask._id);
     }
     // Update the tasks in the state optimistically.
     const cleanedUpTask = updatedTasks.map(task => cleanupTask(task));
@@ -135,6 +142,8 @@ export const handleDragEnd = async (
         updateTasks(tasks);
         console.error("Error updating tasks on the server:", error);
         throw error;
+    } finally {
+        setLoadingTaskId(null);
     }
 };
 
@@ -142,7 +151,7 @@ export const handleDragEnd = async (
 
 // Expand or collapse individual task
 export const toggleExpand = async (task, updateTask, updateTaskOrder, originalTasks) => {
-    const cleanedUpTask = cleanupTask(task)
+    const cleanedUpTask = cleanupTask(task);
     await updateTasksOptimistically(cleanedUpTask, updateTask, updateTaskOrder, originalTasks);
 };
 

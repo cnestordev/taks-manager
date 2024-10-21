@@ -32,7 +32,6 @@ const EditTaskModal = ({ isOpen, onClose, saveTaskChanges, selectedTask }) => {
     defaultValues: {
       title: selectedTask?.title || "",
       description: selectedTask?.description || "",
-      priority: selectedTask?.priority || "Medium",
     },
   });
 
@@ -44,7 +43,6 @@ const EditTaskModal = ({ isOpen, onClose, saveTaskChanges, selectedTask }) => {
       reset({
         title: taskCopy.title,
         description: taskCopy.description,
-        priority: taskCopy.priority,
       });
     }
   }, [selectedTask, reset]);
@@ -80,20 +78,6 @@ const EditTaskModal = ({ isOpen, onClose, saveTaskChanges, selectedTask }) => {
                 {...register("description")}
               />
               <FormErrorMessage>{errors.description?.message}</FormErrorMessage>
-            </FormControl>
-
-            <FormControl isInvalid={errors.priority} isRequired mt={4}>
-              <FormLabel>Priority</FormLabel>
-              <Select
-                id="priority"
-                placeholder="Select priority"
-                {...register("priority")}
-              >
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </Select>
-              <FormErrorMessage>{errors.priority?.message}</FormErrorMessage>
             </FormControl>
           </ModalBody>
 

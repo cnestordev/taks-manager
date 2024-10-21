@@ -1,7 +1,12 @@
 import { useToast } from "@chakra-ui/react";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { useEffect, useState } from "react";
-import { createTask, updateTaskOrder, updateTasksServer, updateTasksOrderOnServer } from "../api/index";
+import {
+  createTask,
+  updateTaskOrder,
+  updateTasksOrderOnServer,
+  updateTasksServer,
+} from "../api/index";
 import "../App.css";
 import DeleteTaskModal from "../components/DeleteTaskModal";
 import EditTaskModal from "../components/EditTaskModal";
@@ -9,7 +14,7 @@ import FormContainer from "../components/FormContainer";
 import Navbar from "../components/Navbar";
 import PriorityColumn from "../components/PriorityColumn";
 import { useTask } from "../context/TaskContext";
-import { useUser } from "../context/UserContext";
+import { useLoading } from "../context/LoadingContext";
 import {
   handleAddTask,
   handleDragEnd,
@@ -20,8 +25,8 @@ import {
 } from "../utils/taskUtils";
 
 const Dashboard = () => {
-  const { user } = useUser();
   const { tasks, addNewTask, removeTask, updateTask, updateTasks } = useTask();
+  const { loadingTaskId, setLoadingTaskId } = useLoading();
   const toast = useToast();
   const [selectedTask, setSelectedTask] = useState(null);
   const [activeColumn, setActiveColumn] = useState(null);
@@ -50,7 +55,8 @@ const Dashboard = () => {
         addNewTask,
         updateTask,
         createTask,
-        removeTask
+        removeTask,
+        setLoadingTaskId
       );
       toast({
         title: "Task created.",
@@ -75,6 +81,28 @@ const Dashboard = () => {
     try {
       setIsDeleteModalOpen(false);
       const updatedTask = { ...selectedTask, isDeleted: true };
+
+      // new array of tasks excluding the deleted task
+      const remainingTasks = tasks.filter(
+        (task) => task._id !== selectedTask._id
+      );
+
+      // tasks of the same priority that are not deleted
+      const samePriorityTasks = remainingTasks.filter(
+        (task) => task.priority === selectedTask.priority
+      );
+
+      // sort these tasks by their current position
+      samePriorityTasks.sort((a, b) => a.position - b.position);
+
+      // reassign positions to remaining tasks with the same priority
+      samePriorityTasks.forEach((task, index) => {
+        task.position = index;
+      });
+
+      // Prepare the payload
+      const payload = [...samePriorityTasks, updatedTask];
+
       await handleRemoveTask(
         updatedTask,
         updateTask,
@@ -108,7 +136,7 @@ const Dashboard = () => {
       const updatedData = JSON.parse(JSON.stringify(selectedTask));
       updatedData.title = formData.title;
       updatedData.description = formData.description;
-      updatedData.priority = formData.priority;
+      setLoadingTaskId(updatedData._id);
 
       await updateSelectedTask(
         updatedData,
@@ -136,12 +164,15 @@ const Dashboard = () => {
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      setLoadingTaskId(null);
     }
   };
 
   const handleToggleExpand = async (task) => {
     try {
       const updatedTask = { ...task, isExpanded: !task.isExpanded };
+      setLoadingTaskId(updatedTask._id);
       await toggleExpand(updatedTask, updateTask, updateTaskOrder, task);
     } catch (error) {
       console.error("Error toggling task expansion:", error);
@@ -152,6 +183,8 @@ const Dashboard = () => {
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      setLoadingTaskId(null);
     }
   };
 
@@ -222,8 +255,14 @@ const Dashboard = () => {
         onDragUpdate={onDragUpdate}
         onDragEnd={async (result) => {
           try {
-            setActiveColumn(null)
-            await handleDragEnd(result, tasks, updateTasksOrderOnServer, updateTasks );
+            setActiveColumn(null);
+            await handleDragEnd(
+              result,
+              tasks,
+              updateTasksOrderOnServer,
+              updateTasks,
+              setLoadingTaskId
+            );
           } catch (error) {
             console.error("Error handling drag end:", error);
             toast({

@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { getTasks } from "../api";
-import { useUser } from "./UserContext";
 import { reorderTasks } from "../utils/taskTransformations";
+import { useUser } from "./UserContext";
 
 const TaskContext = createContext(null);
 export const useTask = () => useContext(TaskContext);

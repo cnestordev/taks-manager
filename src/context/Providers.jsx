@@ -1,13 +1,14 @@
 import { UserProvider } from "./UserContext";
 import { TaskProvider } from "./TaskContext";
+import { LoadingProvider } from "./LoadingContext";
 
 const Providers = ({ children }) => {
   return (
-    <UserProvider>
-      <TaskProvider>
-        {children}
-      </TaskProvider>
-    </UserProvider>
+    <LoadingProvider>
+      <UserProvider>
+        <TaskProvider>{children}</TaskProvider>
+      </UserProvider>
+    </LoadingProvider>
   );
 };
 

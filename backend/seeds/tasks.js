@@ -1,27 +1,57 @@
-// Task creation for seed data
-const createTask = (userId) => {
-    const { title, description, priority } = generateRandomTask();
+const createTask = (userId, position, priority) => {
+    const { title, description } = generateRandomTaskByPriority(priority);
     return {
         title,
         description,
-        priority,
         isDeleted: false,
-        isExpanded: true,
         created: new Date(),
-        assignedTo: userId,
+        createdBy: userId,
+        assignedTo: [userId],
+        taskPosition: [
+            {
+                isExpanded: true,
+                priority,
+                position,
+                userId,
+            },
+        ],
     };
+};
+
+// generate a random task with a specific priority
+const generateRandomTaskByPriority = (priority) => {
+    const tasksWithPriority = randomTasks.filter(task => task.priority === priority);
+    const randomIndex = Math.floor(Math.random() * tasksWithPriority.length);
+    return tasksWithPriority[randomIndex];
 };
 
 // Generate a list of tasks for a specific user
 const generateTasksForUser = (userId) => {
     const numTasks = Math.floor(Math.random() * 5) + 3; // Generate between 3 and 7 tasks
-    return Array.from({ length: numTasks }, () => createTask(userId));
-};
 
-// Generate a random task from the predefined list
-const generateRandomTask = () => {
-    const randomIndex = Math.floor(Math.random() * randomTasks.length);
-    return randomTasks[randomIndex];
+    // Track positions for each priority
+    const priorityPositions = {
+        High: 0,
+        Medium: 0,
+        Low: 0,
+    };
+
+    return Array.from({ length: numTasks }, () => {
+        // Randomly select a priority for the task
+        const priorities = ['High', 'Medium', 'Low'];
+        const randomPriority = priorities[Math.floor(Math.random() * priorities.length)];
+
+        // Get the current position for the selected priority
+        const position = priorityPositions[randomPriority];
+
+        // Create the task with the current priority and position
+        const task = createTask(userId, position, randomPriority);
+
+        // Increment the position for this priority
+        priorityPositions[randomPriority] += 1;
+
+        return task;
+    });
 };
 
 // Example task data

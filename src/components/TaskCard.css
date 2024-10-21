@@ -46,7 +46,7 @@ p {
 }
 
 .delete-btn {
-  border:1px solid #fa2f43 !important;
+  border: 1px solid #fa2f43 !important;
   color: #fa2f43 !important;
   transition: 300ms !important;
 }
@@ -67,4 +67,31 @@ p {
   background-color: #bfbfbf !important;
   color: #fff !important;
   transition: 300ms !important;
+}
+
+.loading-border {
+  position: relative;
+}
+
+.loading-border svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.loading-border .line {
+  stroke-dasharray: 360;
+  stroke-width: 3px;
+  fill: transparent;
+  stroke: rgba(167, 162, 162, 0.397);
+  animation: svgAnimation 2.5s linear infinite;
+}
+
+@keyframes svgAnimation {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 1000;
+  }
 }

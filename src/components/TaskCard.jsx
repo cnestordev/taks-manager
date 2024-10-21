@@ -6,14 +6,13 @@ import {
   AccordionPanel,
   Box,
   Button,
-  Flex
+  Flex,
 } from "@chakra-ui/react";
 import { Draggable } from "@hello-pangea/dnd";
 import { FaEdit } from "react-icons/fa";
 import "./TaskCard.css";
 
 const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
-
   return (
     <Draggable key={task._id} draggableId={task._id} index={index}>
       {(provided) => (
@@ -21,9 +20,19 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className="task-card"
+          className="task-card loading-border"
           onClick={() => toggleExpand(task)}
         >
+          <svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
+            <rect
+              rx="8"
+              ry="8"
+              className="line"
+              height="100%"
+              width="100%"
+              strokeLinejoin="round"
+            />
+          </svg>
           <Accordion allowToggle index={task.isExpanded ? [0] : []}>
             <AccordionItem border="none">
               <h2>
@@ -40,6 +49,7 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
                   <AccordionIcon />
                 </AccordionButton>
               </h2>
+              <p style={{ color: "goldenrod" }}>{task._id}</p>
               <AccordionPanel pb={2}>
                 <Box as="p" textAlign="center" fontSize="15px" mb={2}>
                   {task.description}
@@ -64,6 +74,7 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
                     className="task-btns edit-btn"
                     onClick={(e) => {
                       e.stopPropagation();
+                      console.log(task)
                       editTask(task);
                     }}
                   >

@@ -1,3 +1,5 @@
+import { cleanupTask } from "./taskTransformations";
+
 // Optimistically update tasks in the UI and sync with the backend
 export const updateTasksOptimistically = async (
     updatedTask,
@@ -13,9 +15,10 @@ export const updateTasksOptimistically = async (
         const { data } = await updateTaskOnServer(updatedTask);
         console.log(data);
         // Re-sync the task if the server returns something different
-        updateTasks(data.task);
+        updateTasks(data.tasks);
     } catch (error) {
-        updateTasks(selectedTask)
+        console.log(selectedTask);
+        updateTasks(selectedTask);
         console.error("Error updating task:", error);
         throw new Error("Task update failed on the server.");
     }
@@ -25,12 +28,13 @@ export const updateTasksOptimistically = async (
 export const addTaskOptimistically = async (
     newTaskData,
     addNewTask,
+    updateTask,
     createTaskOnServer,
     removeTask
 ) => {
     // Generate a temporary ID for the new task
     const tempId = `temp-${Date.now()}`;
-    const tempTask = { ...newTaskData, _id: tempId, tempId, isExpanded: true };
+    const tempTask = { ...newTaskData, _id: tempId, tempId, taskPosition: [{ ...newTaskData.taskPosition[0], isExpanded: true }] };
 
     // Optimistic UI update: Add the new task
     addNewTask(tempTask);
@@ -40,8 +44,10 @@ export const addTaskOptimistically = async (
         const { data } = await createTaskOnServer(newTaskData);
         const createdTask = data.tasks;
 
+        console.log(createdTask);
+
         // Update the task in the UI with the actual data from the server
-        addNewTask(createdTask, tempId);
+        updateTask(createdTask, tempId);
     } catch (error) {
         console.error("Error creating new task:", error);
         // Remove the temporary task from the UI
@@ -53,87 +59,95 @@ export const addTaskOptimistically = async (
 };
 
 // Add a new task
-export const handleAddTask = async (newTask, addNewTask, createTaskOnServer, removeTask) => {
+export const handleAddTask = async (newTask, addNewTask, updateTask, createTaskOnServer, removeTask) => {
     try {
-        await addTaskOptimistically(newTask, addNewTask, createTaskOnServer, removeTask);
+        await addTaskOptimistically(newTask, addNewTask, updateTask, createTaskOnServer, removeTask);
     } catch (error) {
         throw new Error(error);
     }
 };
 
-// Handle task drag-and-drop logic
-export const handleDragEnd = async (result, user, updateTasks, updateTaskOrder) => {
-    const { destination, source, draggableId } = result;
-
-    if (!destination) return;
-
-    if (destination.droppableId === source.droppableId && destination.index === source.index) {
-        return;
-    }
-
-    await updateTasksOptimistically(
-        user,
-        (originalTasks) => {
-            const updatedTasks = Array.from(originalTasks);
-
-            const sourceIndex = updatedTasks.findIndex((task) => task._id === draggableId);
-            const movedTask = { ...updatedTasks[sourceIndex], priority: destination.droppableId };
-
-            updatedTasks.splice(sourceIndex, 1);
-
-            const destinationPriorityTasks = updatedTasks.filter(
-                (task) => task.priority === destination.droppableId
-            );
-            const destinationIndex =
-                destinationPriorityTasks.length >= destination.index
-                    ? destination.index
-                    : destinationPriorityTasks.length;
-
-            updatedTasks.splice(
-                destinationIndex + updatedTasks.findIndex((task) => task.priority === destination.droppableId),
-                0,
-                movedTask
-            );
-
-            return updatedTasks;
-        },
-        updateTasks,
-        updateTaskOrder
-    );
-};
-
-// Expand or collapse individual task
-export const toggleExpand = async (task, user, updateTasks, updateTaskOrder) => {
-    await updateTasksOptimistically(
-        user,
-        (originalTasks) =>
-            originalTasks.map((t) =>
-                t._id === task._id ? { ...t, isExpanded: !t.isExpanded } : t
-            ),
-        updateTasks,
-        updateTaskOrder
-    );
-};
-
-// Expand or collapse all tasks in a priority
-export const toggleTaskExpansion = async (priority, expandAll, user, updateTasks, updateTaskOrder) => {
-    await updateTasksOptimistically(
-        user,
-        (originalTasks) =>
-            originalTasks.map((task) =>
-                task.priority === priority ? { ...task, isExpanded: expandAll } : task
-            ),
-        updateTasks,
-        updateTaskOrder
-    );
-};
-
 // Remove a task by marking it as deleted
-export const handleRemoveTask = async (updatedTask, updateTasks, updateTaskOrder) => {
-    await updateTasksOptimistically(updatedTask, updateTasks, updateTaskOrder);
+export const handleRemoveTask = async (updatedTask, updateTasks, updateTaskOrder, selectedTask) => {
+    const cleanedUpTask = cleanupTask(updatedTask);
+    await updateTasksOptimistically(cleanedUpTask, updateTasks, updateTaskOrder, selectedTask);
 };
 
 // Modify the selected task
 export const updateSelectedTask = async (updatedTask, updateTasks, updateTaskOrder, selectedTask) => {
-    await updateTasksOptimistically(updatedTask, updateTasks, updateTaskOrder, selectedTask);
+    const cleanedUpTask = cleanupTask(updatedTask);
+    await updateTasksOptimistically(cleanedUpTask, updateTasks, updateTaskOrder, selectedTask);
+};
+
+export const handleDragEnd = async (
+    result,
+    tasks,
+    updateTasksOnServer,
+    updateTasks
+) => {
+    const { destination, source, draggableId } = result;
+
+    // If there's no destination (e.g., the task was dropped outside a droppable area), do nothing.
+    if (!destination) return;
+
+    // If the task was dropped back in the same position, do nothing.
+    if (
+        destination.droppableId === source.droppableId &&
+        destination.index === source.index
+    ) {
+        return;
+    }
+
+    // Create a deep copy of the tasks to avoid mutating the original state.
+    let updatedTasks = tasks.map((task) => ({ ...task }));
+
+    const sourcePriority = source.droppableId;
+    const destinationPriority = destination.droppableId;
+
+    // Get all tasks in the source and destination columns.
+    const sourceTasks = updatedTasks
+        .filter((task) => task.priority === sourcePriority);
+
+    const destinationTasks = updatedTasks
+        .filter((task) => task.priority === destinationPriority);
+
+    if (source.droppableId === destination.droppableId) {
+        const removedTask = sourceTasks.splice(source.index, 1)[0];
+        sourceTasks.splice(destination.index, 0, removedTask);
+        console.log(sourceTasks);
+        sourceTasks.forEach((task, i) => task.position = i);
+    } else {
+        const removedTask = sourceTasks.splice(source.index, 1)[0];
+        removedTask.priority = destination.droppableId;
+        destinationTasks.splice(destination.index, 0, removedTask);
+        sourceTasks.forEach((task, i) => task.position = i);
+        destinationTasks.forEach((task, i) => task.position = i);
+    }
+    // Update the tasks in the state optimistically.
+    const cleanedUpTask = updatedTasks.map(task => cleanupTask(task));
+    updateTasks(cleanedUpTask);
+
+    try {
+        // Update the tasks on the server.
+        await updateTasksOnServer(cleanedUpTask);
+    } catch (error) {
+        // If there's an error, revert to the original tasks.
+        updateTasks(tasks);
+        console.error("Error updating tasks on the server:", error);
+        throw error;
+    }
+};
+
+
+
+// Expand or collapse individual task
+export const toggleExpand = async (task, updateTask, updateTaskOrder, originalTasks) => {
+    const cleanedUpTask = cleanupTask(task)
+    await updateTasksOptimistically(cleanedUpTask, updateTask, updateTaskOrder, originalTasks);
+};
+
+// Expand or collapse all tasks in a priority
+export const toggleTaskExpansion = async (tasks, updateTasks, updateTaskOrder, originalTasks) => {
+    const cleanedUpTasks = tasks.map(task => cleanupTask(task));
+    await updateTasksOptimistically(cleanedUpTasks, updateTasks, updateTaskOrder, originalTasks);
 };

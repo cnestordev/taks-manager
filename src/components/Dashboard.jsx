@@ -1,27 +1,27 @@
+import { useToast } from "@chakra-ui/react";
 import { DragDropContext } from "@hello-pangea/dnd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createTask, updateTaskOrder, updateTasksServer, updateTasksOrderOnServer } from "../api/index";
 import "../App.css";
+import DeleteTaskModal from "../components/DeleteTaskModal";
+import EditTaskModal from "../components/EditTaskModal";
 import FormContainer from "../components/FormContainer";
 import Navbar from "../components/Navbar";
 import PriorityColumn from "../components/PriorityColumn";
-import { useUser } from "../context/UserContext";
 import { useTask } from "../context/TaskContext";
-import { createTask, updateTaskOrder } from "../api/index";
+import { useUser } from "../context/UserContext";
 import {
+  handleAddTask,
   handleDragEnd,
+  handleRemoveTask,
   toggleExpand,
   toggleTaskExpansion,
-  handleRemoveTask,
   updateSelectedTask,
-  handleAddTask,
 } from "../utils/taskUtils";
-import EditTaskModal from "../components/EditTaskModal";
-import DeleteTaskModal from "../components/DeleteTaskModal";
-import { useToast } from "@chakra-ui/react";
 
 const Dashboard = () => {
   const { user } = useUser();
-  const { tasks, addNewTask, removeTask, updateTask } = useTask();
+  const { tasks, addNewTask, removeTask, updateTask, updateTasks } = useTask();
   const toast = useToast();
   const [selectedTask, setSelectedTask] = useState(null);
   const [activeColumn, setActiveColumn] = useState(null);
@@ -32,14 +32,23 @@ const Dashboard = () => {
   // Add a new task
   const addTask = async (formData, onClose) => {
     onClose();
+    const newTaskPosition = tasks.filter(
+      (task) => task.priority === formData.priority
+    ).length;
     try {
       await handleAddTask(
         {
           title: formData.title,
           description: formData.description,
-          priority: formData.priority,
+          taskPosition: [
+            {
+              priority: formData.priority,
+              position: newTaskPosition,
+            },
+          ],
         },
         addNewTask,
+        updateTask,
         createTask,
         removeTask
       );
@@ -64,10 +73,15 @@ const Dashboard = () => {
 
   const onRemoveTask = async () => {
     try {
-      const updatedTask = { ...selectedTask, isDeleted: true };
-      await handleRemoveTask(updatedTask, updateTask, updateTaskOrder);
-      setSelectedTask(null);
       setIsDeleteModalOpen(false);
+      const updatedTask = { ...selectedTask, isDeleted: true };
+      await handleRemoveTask(
+        updatedTask,
+        updateTask,
+        updateTaskOrder,
+        selectedTask
+      );
+      setSelectedTask(null);
       toast({
         title: "Task deleted.",
         description: "Your task has been deleted successfully.",
@@ -89,12 +103,22 @@ const Dashboard = () => {
   };
 
   // Save changes when editing a task
-  const saveTaskChanges = async (formData) => {
+  const saveTaskChanges = async (formData, resetForm) => {
     try {
-      const updatedData = { ...selectedTask, ...formData };
-      await updateSelectedTask(updatedData, updateTask, updateTaskOrder, selectedTask);
-      setSelectedTask(null);
+      const updatedData = JSON.parse(JSON.stringify(selectedTask));
+      updatedData.title = formData.title;
+      updatedData.description = formData.description;
+      updatedData.priority = formData.priority;
+
+      await updateSelectedTask(
+        updatedData,
+        updateTask,
+        updateTaskOrder,
+        selectedTask
+      );
       setIsEditModalOpen(false);
+      setSelectedTask(null);
+      resetForm();
       toast({
         title: "Task updated.",
         description: "Your task has been updated successfully.",
@@ -103,6 +127,7 @@ const Dashboard = () => {
         isClosable: true,
       });
     } catch (error) {
+      setIsEditModalOpen(true);
       console.error("Error saving task changes:", error);
       toast({
         title: "Error",
@@ -116,7 +141,8 @@ const Dashboard = () => {
 
   const handleToggleExpand = async (task) => {
     try {
-      await toggleExpand(task, user, updateTask, updateTaskOrder);
+      const updatedTask = { ...task, isExpanded: !task.isExpanded };
+      await toggleExpand(updatedTask, updateTask, updateTaskOrder, task);
     } catch (error) {
       console.error("Error toggling task expansion:", error);
       toast({
@@ -129,14 +155,17 @@ const Dashboard = () => {
     }
   };
 
-  const handleToggleTaskExpansion = async (priority, expandAll) => {
+  const handleToggleTaskExpansion = async (priority, boolean) => {
+    const updatedTasks = tasks.map((task) =>
+      task.priority === priority ? { ...task, isExpanded: boolean } : task
+    );
+    const originalTasks = [...tasks];
     try {
       await toggleTaskExpansion(
-        priority,
-        expandAll,
-        user,
-        updateTask,
-        updateTaskOrder
+        updatedTasks,
+        updateTasks,
+        updateTasksServer,
+        originalTasks
       );
     } catch (error) {
       console.error("Error toggling all task expansions:", error);
@@ -193,8 +222,8 @@ const Dashboard = () => {
         onDragUpdate={onDragUpdate}
         onDragEnd={async (result) => {
           try {
-            setActiveColumn(null);
-            await handleDragEnd(result, user, updateTask, updateTaskOrder);
+            setActiveColumn(null)
+            await handleDragEnd(result, tasks, updateTasksOrderOnServer, updateTasks );
           } catch (error) {
             console.error("Error handling drag end:", error);
             toast({

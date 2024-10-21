@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { getTasks } from "../api";
 import { useUser } from "./UserContext";
+import { reorderTasks } from "../utils/taskTransformations";
 
 const TaskContext = createContext(null);
 export const useTask = () => useContext(TaskContext);
@@ -11,42 +12,65 @@ export const TaskProvider = ({ children }) => {
 
   // Get User Tasks on initial load
   useEffect(() => {
-    const getUserTasks = async () => {
+    const fetchTasks = async () => {
+      console.log(user);
       try {
-        const { data } = await getTasks(user);
-        setTasks(data.tasks);
-      } catch (error) {
-        // Handle errors
-      } finally {
-        // Perform any final tasks
+        // Fetch tasks from the database
+        const {
+          data: { tasks: fetchedTasks },
+        } = await getTasks(user);
+        const flattenedTasks = reorderTasks(fetchedTasks, user);
+
+        setTasks(flattenedTasks);
+      } catch (err) {
+        console.log(err);
       }
     };
 
-    getUserTasks();
+    if (user) {
+      fetchTasks();
+    }
   }, [user]);
 
-  const addNewTask = (newTask, tempId) => {
+  const addNewTask = (newTask) => {
     setTasks((prevTasks) => {
-      if (tempId) {
-        console.log("Here!!!")
-        // Replace task with matching tempId
-        return prevTasks.map((task) =>
-          task.tempId === tempId ? newTask : task
-        );
+      return reorderTasks([...prevTasks, newTask], user);
+    });
+  };
+
+  const updateTask = (updatedTask, tempId = null) => {
+    setTasks((prevTasks) => {
+      let tasksChanged = false;
+
+      const updatedTasks = prevTasks.map((task) => {
+        if (tempId && task.tempId === tempId) {
+          tasksChanged = true;
+          return updatedTask;
+        } else if (task._id === updatedTask._id) {
+          tasksChanged = true;
+          return updatedTask;
+        }
+        return task;
+      });
+      if (tasksChanged) {
+        return reorderTasks(updatedTasks, user);
       }
-      // If no tempId, add the new task
-      return [...prevTasks, newTask];
+      return prevTasks;
     });
   };
 
-  const updateTask = (taskToUpdate) => {
+  const updateTasks = (tasksToUpdate) => {
+    const updateMap = new Map(tasksToUpdate.map((task) => [task._id, task]));
+
     setTasks((prevTasks) => {
-      return prevTasks.map((task) =>
-        task._id === taskToUpdate._id ? taskToUpdate : task
+      const updatedTasks = prevTasks.map(
+        (task) => updateMap.get(task._id) || task
       );
+      return reorderTasks(updatedTasks, user);
     });
   };
 
+  //   Remove task from UI if task creation fails on server
   const removeTask = (taskToRemove) => {
     setTasks((prevTasks) =>
       prevTasks.filter((task) => task._id !== taskToRemove._id)
@@ -54,7 +78,9 @@ export const TaskProvider = ({ children }) => {
   };
 
   return (
-    <TaskContext.Provider value={{ tasks, addNewTask, updateTask, removeTask }}>
+    <TaskContext.Provider
+      value={{ tasks, addNewTask, updateTask, updateTasks, removeTask }}
+    >
       {children}
     </TaskContext.Provider>
   );

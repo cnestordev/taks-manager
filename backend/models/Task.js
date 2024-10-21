@@ -4,12 +4,18 @@ const mongoose = require('mongoose');
 const TaskSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },
-    priority: { type: String, enum: ['Low', 'Medium', 'High'], required: true },
     isDeleted: { type: Boolean, default: false },
     created: { type: Date, default: Date.now },
     modified: { type: Date, default: null },
-    isExpanded: { type: Boolean, default: true },
-    assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    taskPosition: [{
+        isExpanded: { type: Boolean, default: true },
+        priority: { type: String, enum: ['Low', 'Medium', 'High'], required: true },
+        position: { type: Number, required: true },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        _id: false
+    }]
 });
 
 // Middleware to update the modified field before updating the document

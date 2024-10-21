@@ -7,5 +7,7 @@ const validateTask = require('../middleware/validateTask');
 router.get('/:id', taskController.getTasks)
 router.post('/create', validateTask, taskController.createTask);
 router.post('/updateTaskOrder', validateTask, taskController.updateTaskOrder);
+router.post('/updateTasks', taskController.updateTasksServer)
+router.post('/updateTasksOrderOnServer', taskController.updateTasksOrderServer)
 
 module.exports = router;

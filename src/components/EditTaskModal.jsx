@@ -21,7 +21,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect } from "react";
 
 const EditTaskModal = ({ isOpen, onClose, saveTaskChanges, selectedTask }) => {
-  // React Hook Form validation
   const {
     register,
     handleSubmit,
@@ -37,21 +36,22 @@ const EditTaskModal = ({ isOpen, onClose, saveTaskChanges, selectedTask }) => {
     },
   });
 
-
   useEffect(() => {
     if (selectedTask) {
+
+      const taskCopy = JSON.parse(JSON.stringify(selectedTask));
+
       reset({
-        title: selectedTask.title,
-        description: selectedTask.description,
-        priority: selectedTask.priority,
+        title: taskCopy.title,
+        description: taskCopy.description,
+        priority: taskCopy.priority,
       });
     }
   }, [selectedTask, reset]);
 
   const onSubmit = async (data, e) => {
     e.preventDefault();
-    await saveTaskChanges(data);
-    reset();
+    await saveTaskChanges(data, reset);
   };
 
   return (

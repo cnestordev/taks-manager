@@ -21,10 +21,9 @@ const PORT = process.env.PORT || 5000;
 
 // Connect to Database
 connectDB();
-
 // Middleware Setup
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: [process.env.VITE_LOCAL_HOST, process.env.VITE_LOCAL_IP],
     credentials: true
 }));
 app.use(express.json());
@@ -39,4 +38,4 @@ app.use('/api/auth', authRoutes);
 app.use('/api/task', taskRoutes);
 
 // Server
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on http://0.0.0.0:${PORT}`));

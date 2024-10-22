@@ -81,11 +81,11 @@ const EditTaskModal = ({ isOpen, onClose, saveTaskChanges, selectedTask }) => {
             </FormControl>
           </ModalBody>
 
-          <ModalFooter>
+          <ModalFooter gap="4">
+            <Button onClick={onClose}>Cancel</Button>
             <Button colorScheme="blue" type="submit">
               Save
             </Button>
-            <Button onClick={onClose}>Cancel</Button>
           </ModalFooter>
         </form>
       </ModalContent>

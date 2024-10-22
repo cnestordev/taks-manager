@@ -28,7 +28,8 @@ const taskValidationSchema = Joi.object({
             position: Joi.number().integer().min(0).required(),
             userId: Joi.string().custom(objectIdValidator).optional(),
         })
-    ).optional()
+    ).optional(),
+    isCompleted: Joi.boolean().default(false)
 });
 
 // Middleware for validating task payload

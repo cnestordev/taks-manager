@@ -7,6 +7,7 @@ const createTask = (userId, position, priority) => {
         created: new Date(),
         createdBy: userId,
         assignedTo: [userId],
+        isCompleted: false,
         taskPosition: [
             {
                 isExpanded: true,

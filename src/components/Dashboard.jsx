@@ -23,6 +23,7 @@ import {
   toggleTaskExpansion,
   updateSelectedTask,
 } from "../utils/taskUtils";
+import CompletedTaskModal from "./CompletedTaskModal";
 
 const Dashboard = () => {
   const { tasks, addNewTask, removeTask, updateTask, updateTasks } = useTask();
@@ -33,6 +34,7 @@ const Dashboard = () => {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCompletedModalOpen, setIsCompletedModalOpen] = useState(false);
 
   // Add a new task
   const addTask = async (formData, onClose) => {
@@ -127,6 +129,94 @@ const Dashboard = () => {
       toast({
         title: "Error",
         description: "Failed to delete task. Please try again.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Toggle a task's completed status
+  const onToggleTaskCompletion = async () => {
+    try {
+      const copiedTasks = JSON.parse(JSON.stringify(tasks));
+      const backUpTasks = JSON.parse(JSON.stringify(tasks));
+
+      // Toggle the isCompleted value
+      const updatedTask = {
+        ...selectedTask,
+        isCompleted: !selectedTask.isCompleted,
+      };
+
+      let recalculatedTasks;
+
+      if (updatedTask.isCompleted) {
+        // When the task is completed: remove it from the list and reassign positions
+        const remainingTasks = copiedTasks.filter(
+          (task) => task._id !== selectedTask._id
+        );
+
+        const samePriorityTasks = remainingTasks.filter(
+          (task) => task.priority === selectedTask.priority
+        );
+
+        const sameCompletedStatus = samePriorityTasks.filter(
+          (task) => task.isCompleted === false
+        );
+
+        // Sort these tasks by their current position
+        sameCompletedStatus.sort((a, b) => a.position - b.position);
+
+        // Reassign positions to remaining tasks with the same priority
+        sameCompletedStatus.forEach((task, index) => {
+          task.position = index;
+        });
+
+        recalculatedTasks = [...sameCompletedStatus, updatedTask];
+      } else {
+        // When the task is reverted to incomplete: add it to the end of the array
+        const remainingTasks = copiedTasks.filter(
+          (task) => task._id !== selectedTask._id
+        );
+
+        const samePriorityTasks = remainingTasks.filter(
+          (task) => task.priority === selectedTask.priority
+        );
+
+        // Sort these tasks by their current position
+        samePriorityTasks.sort((a, b) => a.position - b.position);
+
+        // Add the updated task to the end with the correct new position
+        updatedTask.position = samePriorityTasks.length;
+        recalculatedTasks = [...samePriorityTasks, updatedTask];
+      }
+
+      await handleRemoveTask(
+        recalculatedTasks,
+        updateTasks,
+        updateTasksOrderOnServer,
+        backUpTasks
+      );
+
+      setSelectedTask(null);
+
+      toast({
+        title: updatedTask.isCompleted
+          ? "Task completed."
+          : "Task marked incomplete.",
+        description: updatedTask.isCompleted
+          ? "Your task has been marked as completed successfully."
+          : "Your task has been marked as incomplete and moved to the end.",
+        status: "info",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error("Error toggling task completion:", error);
+
+      toast({
+        title: "Error",
+        description: "Failed to toggle task completion. Please try again.",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -240,6 +330,15 @@ const Dashboard = () => {
         taskTitle={selectedTask ? selectedTask.title : ""}
         handleRemoveTask={onRemoveTask}
       />
+      {/* Completed Task Modal */}
+      {selectedTask && (
+        <CompletedTaskModal
+          isOpen={isCompletedModalOpen}
+          onClose={() => setIsCompletedModalOpen(false)}
+          task={selectedTask}
+          handleCompletedTask={onToggleTaskCompletion}
+        />
+      )}
 
       {/* Edit Task Modal */}
       {selectedTask && (
@@ -288,6 +387,10 @@ const Dashboard = () => {
               editTask={(task) => {
                 setSelectedTask(task);
                 setIsEditModalOpen(true);
+              }}
+              completedTask={(task) => {
+                setSelectedTask(task);
+                setIsCompletedModalOpen(true);
               }}
               toggleTaskExpansion={handleToggleTaskExpansion}
               priority={priority}

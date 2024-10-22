@@ -20,6 +20,11 @@
   box-sizing: border-box;
 }
 
+.header-content {
+  display: flex;
+  flex-direction: column;
+}
+
 /* High Priority */
 .header-high {
   background-color: rgba(233, 192, 192, 0.5);

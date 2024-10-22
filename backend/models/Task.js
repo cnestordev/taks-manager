@@ -15,7 +15,8 @@ const TaskSchema = new mongoose.Schema({
         position: { type: Number, required: true },
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         _id: false
-    }]
+    }],
+    isCompleted: { type: Boolean, default: false },
 });
 
 // Middleware to update the modified field before updating the document

@@ -13,18 +13,25 @@ import { FaEdit } from "react-icons/fa";
 import "./TaskCard.css";
 import { useLoading } from "../context/LoadingContext";
 
-const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
+const TaskCard = ({
+  task,
+  deleteTask,
+  editTask,
+  completedTask,
+  index,
+  toggleExpand,
+}) => {
   const { loadingTaskId } = useLoading();
   const taskIdMatch = loadingTaskId === task._id;
 
   return (
-    <Draggable key={task._id} draggableId={task._id} index={index}>
+    <Draggable isDragDisabled={task.isCompleted} key={task._id} draggableId={task._id} index={index}>
       {(provided) => (
         <Box
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`task-card ${taskIdMatch ? "loading-border" : ""}`}
+          className={`task-card ${taskIdMatch ? "loading-border" : ""} ${task.isCompleted ? "task-card-completed" : "task-card-inprogress"}`}
           onClick={() => toggleExpand(task)}
         >
           <svg
@@ -64,18 +71,6 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
                 </Box>
                 <Flex gap="30px" justifyContent="center" marginTop="4">
                   <Button
-                    aria-label="Delete Task"
-                    size="sm"
-                    className="task-btns delete-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteTask(task);
-                    }}
-                  >
-                    Delete
-                  </Button>
-
-                  <Button
                     aria-label="Edit Task"
                     icon={<FaEdit />}
                     size="sm"
@@ -86,6 +81,28 @@ const TaskCard = ({ task, deleteTask, editTask, index, toggleExpand }) => {
                     }}
                   >
                     Edit
+                  </Button>
+                  <Button
+                    aria-label="Complete Task"
+                    size="sm"
+                    className="task-btns complete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      completedTask(task);
+                    }}
+                  >
+                    {task.isCompleted ? "Restore" : "Complete"}
+                  </Button>
+                  <Button
+                    aria-label="Delete Task"
+                    size="sm"
+                    className="task-btns delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteTask(task);
+                    }}
+                  >
+                    Delete
                   </Button>
                 </Flex>
               </AccordionPanel>

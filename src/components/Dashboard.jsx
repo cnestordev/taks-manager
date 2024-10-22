@@ -80,10 +80,14 @@ const Dashboard = () => {
   const onRemoveTask = async () => {
     try {
       setIsDeleteModalOpen(false);
+
+      const copiedTasks = JSON.parse(JSON.stringify(tasks));
+      const backUpTasks = JSON.parse(JSON.stringify(tasks));
+
       const updatedTask = { ...selectedTask, isDeleted: true };
 
       // new array of tasks excluding the deleted task
-      const remainingTasks = tasks.filter(
+      const remainingTasks = copiedTasks.filter(
         (task) => task._id !== selectedTask._id
       );
 
@@ -101,13 +105,13 @@ const Dashboard = () => {
       });
 
       // Prepare the payload
-      const payload = [...samePriorityTasks, updatedTask];
+      const recalucatedTasks = [...samePriorityTasks, updatedTask];
 
       await handleRemoveTask(
-        updatedTask,
-        updateTask,
-        updateTaskOrder,
-        selectedTask
+        recalucatedTasks,
+        updateTasks,
+        updateTasksOrderOnServer,
+        backUpTasks
       );
       setSelectedTask(null);
       toast({

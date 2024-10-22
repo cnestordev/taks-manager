@@ -73,9 +73,9 @@ export const handleAddTask = async (newTask, addNewTask, updateTask, createTaskO
 };
 
 // Remove a task by marking it as deleted
-export const handleRemoveTask = async (updatedTask, updateTasks, updateTaskOrder, selectedTask) => {
-    const cleanedUpTask = cleanupTask(updatedTask);
-    await updateTasksOptimistically(cleanedUpTask, updateTasks, updateTaskOrder, selectedTask);
+export const handleRemoveTask = async (updatedTasks, updateTasks, updateTaskOrder, selectedTask) => {
+    const cleanedUpTasks = updatedTasks.map(task => cleanupTask(task));
+    await updateTasksOptimistically(cleanedUpTasks, updateTasks, updateTaskOrder, selectedTask);
 };
 
 // Modify the selected task

@@ -176,7 +176,6 @@ const Dashboard = () => {
   const handleToggleExpand = async (task) => {
     try {
       const updatedTask = { ...task, isExpanded: !task.isExpanded };
-      setLoadingTaskId(updatedTask._id);
       await toggleExpand(updatedTask, updateTask, updateTaskOrder, task);
     } catch (error) {
       console.error("Error toggling task expansion:", error);
@@ -187,8 +186,6 @@ const Dashboard = () => {
         duration: 3000,
         isClosable: true,
       });
-    } finally {
-      setLoadingTaskId(null);
     }
   };
 

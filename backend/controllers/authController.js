@@ -87,6 +87,24 @@ exports.checkUser = async (req, res) => {
     }
 };
 
+exports.getAllUsers = async (req, res) => {
+    if (req.isAuthenticated()) {
+        try {
+            // Fetch all users except the current user
+            const users = await User.find({ _id: { $ne: req.user._id } }).select('username');
+
+            // Return the list of users
+            return res.status(200).json(createResponse(200, 'Users fetched successfully', users));
+        } catch (err) {
+            console.error('Error fetching users:', err);
+            return res.status(500).json(createResponse(500, 'Internal server error', null));
+        }
+    } else {
+        return res.status(401).json(createResponse(401, 'User not authenticated'));
+    }
+};
+
+
 // Logout Handler
 exports.logout = (req, res) => {
     req.logout((err) => {

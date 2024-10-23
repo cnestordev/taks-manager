@@ -11,20 +11,31 @@ const createResponse = (statusCode, message, tasks = []) => ({
 exports.createTask = async (req, res) => {
     if (req.isAuthenticated()) {
         try {
-            const { title, description } = req.body;
+            const { title, description, assignedTo } = req.body;
 
             // Create a new task document
             const newTask = new Task({
                 title,
                 description,
-                assignedTo: [req.user._id],
+                assignedTo: [req.user._id, ...assignedTo],
                 createdBy: req.user._id,
-                taskPosition: req.body.taskPosition.map(pos => ({
-                    ...pos,
-                    isExpanded: true,
-                    userId: req.user._id
-                }))
+                taskPosition: [
+                    // Map over taskPosition for the task creator
+                    ...req.body.taskPosition.map(pos => ({
+                        ...pos,
+                        userId: req.user._id,
+                        position: pos.position
+                    })),
+                    ...assignedTo.map(userId => ({
+                        priority: req.body.taskPosition[0].priority,
+                        userId: new mongoose.Types.ObjectId(userId),
+                        position: -1
+                    }))
+                ]
             });
+
+            // Save the new task
+            await newTask.save();
 
             // Save the new Task
             await newTask.save();
@@ -46,7 +57,7 @@ exports.getTasks = async (req, res) => {
         try {
             // Find tasks assigned to the user
             const tasks = await Task.find({
-                assignedTo: req.user._id,
+                assignedTo: { $in: [req.user._id] },
                 isDeleted: { $ne: true }
             })
                 .select('-modified -__v')
@@ -54,7 +65,7 @@ exports.getTasks = async (req, res) => {
 
             // Filter taskPosition for the current user
             const filteredTasks = tasks.map(task => {
-                const filteredTaskPosition = task.taskPosition.find(pos => pos.userId.equals(req.user._id));
+                const filteredTaskPosition = task.taskPosition.find(pos => pos.userId.toString() === req.user._id.toString());
                 return {
                     ...task,
                     taskPosition: filteredTaskPosition ? [filteredTaskPosition] : []
@@ -78,17 +89,33 @@ exports.updateTaskOrder = async (req, res) => {
     }
 
     try {
-        const taskId = req.body._id;
+        const taskId = new mongoose.Types.ObjectId(req.body._id);
+        const userId = req.user._id;
+        const userTaskPosition = req.body.taskPosition[0]; // The taskPosition for the current user
 
-        // Update the task directly in the database
+        // Update both taskPosition for the current user and other task fields
         const task = await Task.findOneAndUpdate(
-            { _id: taskId, assignedTo: req.user._id },
-            req.body,
-            { new: true } // Return updated document
+            { _id: taskId, 'taskPosition.userId': userId },  // Find task and specific user's taskPosition
+            {
+                $set: {
+                    // Update relevant fields in taskPosition
+                    'taskPosition.$.priority': userTaskPosition.priority,
+                    'taskPosition.$.position': userTaskPosition.position,
+                    'taskPosition.$.isExpanded': userTaskPosition.isExpanded,
+
+                    // Update other fields in the task from req.body
+                    title: req.body.title,
+                    description: req.body.description,
+                    isDeleted: req.body.isDeleted,
+                    isCompleted: req.body.isCompleted,
+                    assignedTo: req.body.assignedTo
+                }
+            },
+            { new: true }
         );
 
         if (!task) {
-            return res.status(404).json({ message: 'Task not found or not assigned to the user.' });
+            return res.status(404).json({ message: 'Task not found or task position for user not found.' });
         }
 
         return res.status(200).json(createResponse(200, 'Task updated successfully', task));
@@ -97,7 +124,6 @@ exports.updateTaskOrder = async (req, res) => {
         return res.status(500).json({ message: 'An error occurred while updating the task.' });
     }
 };
-
 
 // Update multiple tasks
 exports.updateTasksServer = async (req, res) => {
@@ -109,7 +135,7 @@ exports.updateTasksServer = async (req, res) => {
             const updatePromises = tasksToUpdate.map((taskData) => {
                 return Task.findOneAndUpdate(
                     {
-                        _id: taskData._id,
+                        _id: new mongoose.Types.ObjectId(taskData._id),
                         assignedTo: { $in: [req.user._id] }
                     },
                     taskData,
@@ -148,14 +174,62 @@ const updateMultipleTasksWithTransaction = async (tasksToUpdate, userId) => {
     const session = await mongoose.startSession();
     try {
         const transactionResult = await session.withTransaction(async () => {
+            const userIdObj = new mongoose.Types.ObjectId(userId);
+
             const updatePromises = tasksToUpdate.map((taskData) => {
+
+                const buildSetObject = () => {
+                    const setObj = {};
+
+                    // Handle other fields
+                    const allowedFields = ['title', 'description', 'isDeleted', 'isCompleted'];
+                    allowedFields.forEach(field => {
+                        if (taskData[field] !== undefined) {
+                            setObj[field] = taskData[field];
+                        }
+                    });
+
+                    // Update the taskPosition array
+                    setObj.taskPosition = {
+                        $concatArrays: [
+                            {
+                                $filter: {
+                                    input: '$taskPosition',
+                                    cond: {
+                                        $ne: [
+                                            { $toString: '$$this.userId' },
+                                            userIdObj.toString()
+                                        ]
+                                    }
+                                }
+                            },
+                            [
+                                {
+                                    ...taskData.taskPosition[0],
+                                    userId: userIdObj
+                                }
+                            ]
+                        ]
+                    };
+                    return setObj;
+                };
+
+                // Prepare the aggregation pipeline update
+                const update = [
+                    {
+                        $set: buildSetObject()
+                    }
+                ];
+
+                const options = { new: true, session };
+
                 return Task.findOneAndUpdate(
                     {
-                        _id: taskData._id,
-                        assignedTo: { $in: [userId] }
+                        _id: new mongoose.Types.ObjectId(taskData._id),
+                        assignedTo: { $in: [userIdObj] }
                     },
-                    taskData,
-                    { new: true, session }
+                    update,
+                    options
                 );
             });
 
@@ -211,7 +285,3 @@ exports.updateTasksOrderServer = async (req, res) => {
         return res.status(401).json({ message: 'User not authenticated' });
     }
 };
-
-
-
-

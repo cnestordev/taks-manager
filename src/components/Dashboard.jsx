@@ -14,6 +14,7 @@ import FormContainer from "../components/FormContainer";
 import Navbar from "../components/Navbar";
 import PriorityColumn from "../components/PriorityColumn";
 import { useTask } from "../context/TaskContext";
+import { useUser } from "../context/UserContext";
 import { useLoading } from "../context/LoadingContext";
 import {
   handleAddTask,
@@ -27,6 +28,7 @@ import CompletedTaskModal from "./CompletedTaskModal";
 
 const Dashboard = () => {
   const { tasks, addNewTask, removeTask, updateTask, updateTasks } = useTask();
+  const { user } = useUser();
   const { loadingTaskId, setLoadingTaskId } = useLoading();
   const toast = useToast();
   const [selectedTask, setSelectedTask] = useState(null);
@@ -37,8 +39,9 @@ const Dashboard = () => {
   const [isCompletedModalOpen, setIsCompletedModalOpen] = useState(false);
 
   // Add a new task
-  const addTask = async (formData, onClose) => {
-    onClose();
+  const addTask = async (formData) => {
+    console.log(formData);
+    console.log(user);
     const newTaskPosition = tasks.filter(
       (task) => task.priority === formData.priority
     ).length;
@@ -47,6 +50,7 @@ const Dashboard = () => {
         {
           title: formData.title,
           description: formData.description,
+          assignedTo: [...formData.addedUsers.map((user) => user._id)],
           taskPosition: [
             {
               priority: formData.priority,
@@ -60,6 +64,7 @@ const Dashboard = () => {
         removeTask,
         setLoadingTaskId
       );
+
       toast({
         title: "Task created.",
         description: "Your task has been added successfully.",
@@ -102,8 +107,12 @@ const Dashboard = () => {
       samePriorityTasks.sort((a, b) => a.position - b.position);
 
       // reassign positions to remaining tasks with the same priority
-      samePriorityTasks.forEach((task, index) => {
-        task.position = index;
+      let currentIndex = 0;
+      samePriorityTasks.forEach((task) => {
+        if (task.position >= 0) {
+          task.position = currentIndex;
+          currentIndex++;
+        }
       });
 
       // Prepare the payload

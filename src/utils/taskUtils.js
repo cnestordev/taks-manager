@@ -13,11 +13,11 @@ export const updateTasksOptimistically = async (
     try {
         // Send the updated task to the server
         const { data } = await updateTaskOnServer(updatedTask);
-        console.log(data);
+
         // Re-sync the task if the server returns something different
         updateTasks(data.tasks);
     } catch (error) {
-        console.log(selectedTask);
+        // Rollback the optimistic update if there's an error
         updateTasks(selectedTask);
         console.error("Error updating task:", error);
         throw new Error("Task update failed on the server.");

@@ -12,6 +12,8 @@ import { Draggable } from "@hello-pangea/dnd";
 import { FaEdit } from "react-icons/fa";
 import "./TaskCard.css";
 import { useLoading } from "../context/LoadingContext";
+import useSocket from "../hooks/useSocket";
+import { useUser } from "../context/UserContext";
 
 const TaskCard = ({
   task,
@@ -23,15 +25,33 @@ const TaskCard = ({
 }) => {
   const { loadingTaskId } = useLoading();
   const taskIdMatch = loadingTaskId === task._id;
+  const { user } = useUser()
+
+  // Use the socket hook to join the task room and handle updates
+  const { updateTask } = useSocket(
+    task._id,
+    task.assignedTo.length,
+    () => {
+      console.log("!!!!");
+    },
+    user
+  );
 
   return (
-    <Draggable isDragDisabled={task.isCompleted} key={task._id} draggableId={task._id} index={index}>
+    <Draggable
+      isDragDisabled={task.isCompleted}
+      key={task._id}
+      draggableId={task._id}
+      index={index}
+    >
       {(provided) => (
         <Box
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`task-card ${taskIdMatch ? "loading-border" : ""} ${task.isCompleted ? "task-card-completed" : "task-card-inprogress"}`}
+          className={`task-card ${taskIdMatch ? "loading-border" : ""} ${
+            task.isCompleted ? "task-card-completed" : "task-card-inprogress"
+          }`}
           onClick={() => toggleExpand(task)}
         >
           <svg
